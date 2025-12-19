@@ -1,0 +1,8 @@
+{
+  "name": "@task/backtester",
+  "version": "0.0.0",
+  "main": "src/runner.ts",
+  "scripts": {
+    "start": "node ./bin/run.js"
+  }
+}

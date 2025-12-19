@@ -1,0 +1,8 @@
+{
+    "chat.mcp.discovery.enabled": {
+        "claude-desktop": true
+    },
+    "chat.mcp.serverSampling": {
+        
+    }
+}
