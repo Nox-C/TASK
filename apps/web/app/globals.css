@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --radius: 0.75rem;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background-color: #0b0f19;
+  color: #e5e7eb;
+}
+
+.card {
+  @apply bg-gray-800/80 backdrop-blur rounded-xl border border-gray-700 shadow-elevated;
+}
+
+.kpi {
+  @apply p-6 rounded-xl border border-gray-700 bg-gradient-to-br from-gray-800 to-gray-700 shadow-elevated;
+}
+
+.status-pill {
+  @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium;
+}
+.status-pill.healthy { @apply bg-green-500/20 text-green-400 border border-green-600/30; }
+.status-pill.degraded { @apply bg-yellow-500/20 text-yellow-300 border border-yellow-600/30; }
+.status-pill.down { @apply bg-red-500/20 text-red-400 border border-red-600/30; }
+.status-pill.connected { @apply bg-green-500/20 text-green-400 border border-green-600/30; }
+.status-pill.disconnected { @apply bg-red-500/20 text-red-400 border border-red-600/30; }
