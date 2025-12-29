@@ -1,10 +1,10 @@
 import PgBoss from 'pg-boss';
-import { registerStartBot } from './processors/start-bot.processor';
-import { registerStopBot } from './processors/stop-bot.processor';
-import { registerNotify } from './processors/notify.processor';
-import { registerPnlCompute } from './processors/pnl.processor';
-import { registerReplayProcessor } from './processors/replay.processor';
-import { registerCronScheduler } from './schedulers/cron-scheduler';
+import { registerStartBot } from './processors/start-bot.processor.js';
+import { registerStopBot } from './processors/stop-bot.processor.js';
+import { registerNotify } from './processors/notify.processor.js';
+import { registerPnlCompute } from './processors/pnl.processor.js';
+import { registerReplayProcessor } from './processors/replay.processor.js';
+import { registerCronScheduler } from './schedulers/cron-scheduler.js';
 
 async function start() {
   const connectionString = process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/postgres';

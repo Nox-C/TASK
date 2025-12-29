@@ -11,4 +11,5 @@ onlyBuiltDependencies:
   - esbuild
   - keccak
   - prisma
+  - sharp
   - utf-8-validate

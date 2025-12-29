@@ -1,1 +1,6 @@
-[00:00:01.219] Server  LOG     ✓ Ready in 799ms
+[00:00:00.717] Server  LOG     ✓ Ready in 459ms
+[00:00:08.461] Server  LOG     ○ Compiling / ...
+[00:00:09.845] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:02:12.907] Browser ERROR   Failed to fetch tasks: {}
+[00:02:13.121] Browser ERROR   Failed to fetch tasks: {}
+[00:04:46.089] Server  LOG     ✓ Compiled in 139ms

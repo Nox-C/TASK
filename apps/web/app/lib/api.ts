@@ -60,8 +60,8 @@ export const Api = {
       actions: TaskAction[];
       ownerId?: string;
     }) => fetchJSON(`/tasks`, { method: "POST", body: JSON.stringify(body) }),
-    runs: () =>
-      fetchJSON<TaskRun[]>(`/tasks/runs`).catch(() => [] as TaskRun[]),
+    run: (id: string, actorId?: string) =>
+      fetchJSON<TaskRun>(`/tasks/${id}/run${actorId ? `?actorId=${actorId}` : ""}`, { method: "POST" }),
   },
   backtest: {
     run: (body: {

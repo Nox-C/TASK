@@ -20,6 +20,12 @@ echo "✅ All services started!"
 echo "🌐 Web app: http://localhost:3000"
 echo "📡 API: http://localhost:3001"
 echo ""
+echo "Waiting for services to be ready..."
+sleep 5
+
+echo "Opening TASK Control Panel in browser..."
+xdg-open http://localhost:3000
+
 echo "Press Ctrl+C to stop all services"
 
 # Wait for interrupt signal
