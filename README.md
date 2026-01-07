@@ -76,6 +76,7 @@ pnpm prisma studio
 ## 🎯 Features
 
 ### Core Platform
+
 - ✅ User authentication & sessions
 - ✅ Trading bot management
 - ✅ Real-time WebSocket connections
