@@ -86,7 +86,12 @@ export default function BotsPage() {
             <p className="text-gray-400">Create, manage, and monitor your trading bots</p>
           </div>
           <div className="flex space-x-4">
-            <Button onClick={() => setShowCreateForm(true)} variant="primary">Create Bot</Button>
+            <Link href="/bots/create">
+              <Button variant="primary" className="bg-walle-yellow text-walle-brown hover:bg-walle-orange">
+                🤖 Create WALL-E Bot
+              </Button>
+            </Link>
+            <Button onClick={() => setShowCreateForm(true)} variant="secondary">Quick Create</Button>
             <Link href="/"><Button variant="secondary">Back to Home</Button></Link>
           </div>
         </div>

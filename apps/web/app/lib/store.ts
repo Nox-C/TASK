@@ -1,8 +1,9 @@
 import { create } from 'zustand'
 import { Api, Bot, PnlSnapshot } from './api'
+import { connectActivity, WsStatus } from './ws'
 
 export type HealthStatus = 'healthy' | 'degraded' | 'down'
-export type WsStatus = 'connected' | 'disconnected'
+
 
 export interface DashboardStats {
   totalBots: number
@@ -20,7 +21,12 @@ interface DashboardState {
   stats: DashboardStats
   bots: Bot[]
   pnl: PnlSnapshot[]
+  marketData: Record<string, { price: number; timestamp: number }>
+  activityFeed: Array<{ type: string; message: string; timestamp: number }>
   refresh: () => Promise<void>
+  updateMarketData: (symbol: string, price: number, timestamp: number) => void
+  addActivity: (activity: { type: string; message: string }) => void
+  setWebSocketStatus: (status: WsStatus) => void
 }
 
 export const useDashboardStore = create<DashboardState>((set, get) => ({
@@ -30,6 +36,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   stats: { totalBots: 0, activeBots: 0, totalValue: 0, dailyPnL: 0, taskRuns: 0, successRate: 0 },
   bots: [],
   pnl: [],
+  marketData: {},
+  activityFeed: [],
   refresh: async () => {
     try {
       set({ loading: true, error: undefined })
@@ -56,5 +64,29 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     } catch (e: any) {
       set({ error: e?.message || 'Unknown error', health: { ...get().health, api: 'down' }, loading: false })
     }
+  },
+  updateMarketData: (symbol: string, price: number, timestamp: number) => {
+    set(state => ({
+      marketData: {
+        ...state.marketData,
+        [symbol]: { price, timestamp }
+      }
+    }))
+  },
+  addActivity: (activity: { type: string; message: string }) => {
+    set(state => ({
+      activityFeed: [
+        { ...activity, timestamp: Date.now() },
+        ...state.activityFeed.slice(0, 49) // Keep last 50 activities
+      ]
+    }))
+  },
+  setWebSocketStatus: (status: WsStatus) => {
+    set(state => ({
+      health: {
+        ...state.health,
+        websocket: status
+      }
+    }))
   },
 }))

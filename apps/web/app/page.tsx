@@ -82,21 +82,33 @@ export default function Page() {
           </div>
         </header>
 
-        {/* WALLe Branding Section */}
-        <div className="mb-8 p-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-center">
-          <div className="flex items-center justify-center space-x-4 mb-4">
+        {/* WALL-E Branding Section */}
+        <div className="mb-8 p-8 bg-gradient-to-br from-walle-yellow via-walle-orange to-walle-brown rounded-2xl text-center relative overflow-hidden">
+          {/* Background pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-4 left-4 w-8 h-8 bg-white rounded-full"></div>
+            <div className="absolute top-12 right-8 w-4 h-4 bg-white rounded-full"></div>
+            <div className="absolute bottom-8 left-12 w-6 h-6 bg-white rounded-full"></div>
+            <div className="absolute bottom-4 right-4 w-3 h-3 bg-white rounded-full"></div>
+          </div>
+          
+          <div className="relative z-10 flex items-center justify-center space-x-6 mb-6">
             <img
               src="/wall-e-icon.png"
-              alt="WALLe"
-              className="w-24 h-24 rounded-xl border-4 border-white shadow-xl"
+              alt="WALL-E"
+              className="w-28 h-28 rounded-2xl border-4 border-white shadow-2xl animate-walleGlow"
             />
             <div className="text-left">
-              <h2 className="text-3xl font-bold text-white">WALLE</h2>
-              <p className="text-blue-100">Intelligent Trading Automation</p>
+              <h2 className="text-4xl font-bold text-white drop-shadow-lg">WALL-E</h2>
+              <p className="text-white/90 text-lg font-medium">Intelligent Trading Automation</p>
+              <div className="flex items-center space-x-2 mt-2">
+                <div className="w-2 h-2 bg-walle-green rounded-full animate-pulse"></div>
+                <span className="text-white/80 text-sm">System Online</span>
+              </div>
             </div>
           </div>
-          <p className="text-white text-lg">
-            Powered by Advanced AI & Machine Learning
+          <p className="text-white text-xl font-semibold drop-shadow-md relative z-10">
+            🤖 Powered by Advanced AI & Machine Learning 🌱
           </p>
         </div>
 
@@ -145,10 +157,54 @@ export default function Page() {
 
         {/* Enhanced Stats Cards using KpiCard */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <KpiCard title="Total Bots" value={stats.totalBots} hint="All bots in system" accent="blue" rightSlot={<img src="/wall-e-icon.png" alt="WALLe" className="w-8 h-8 rounded" />} />
-          <KpiCard title="Active Bots" value={stats.activeBots} hint="Currently running" accent="green" rightSlot={<div className="w-8 h-8 bg-green-400 rounded-full animate-pulse" />} />
-          <KpiCard title="Portfolio Value" value={`${stats.totalValue.toLocaleString()}`} hint="Total assets" accent="yellow" rightSlot={<div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center text-yellow-900 font-bold">$</div>} />
-          <KpiCard title="TASK Runs" value={stats.taskRuns} hint="Automations executed" accent="purple" rightSlot={<div className="w-8 h-8 bg-purple-400 rounded animate-spin" />} />
+          <KpiCard 
+            title="Total Bots" 
+            value={stats.totalBots} 
+            hint="All WALL-E units in system" 
+            accent="blue" 
+            rightSlot={
+              <img 
+                src="/wall-e-icon.png" 
+                alt="WALL-E" 
+                className="w-8 h-8 rounded-lg animate-float" 
+              />
+            } 
+          />
+          <KpiCard 
+            title="Active Bots" 
+            value={stats.activeBots} 
+            hint="Currently operational" 
+            accent="green" 
+            rightSlot={
+              <div className="flex items-center space-x-1">
+                <div className="w-8 h-8 bg-walle-green rounded-full animate-pulse flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">●</span>
+                </div>
+              </div>
+            }
+          />
+          <KpiCard 
+            title="Portfolio Value" 
+            value={`${stats.totalValue.toLocaleString()}`} 
+            hint="Total assets under management" 
+            accent="yellow" 
+            rightSlot={
+              <div className="w-8 h-8 bg-walle-yellow rounded-full flex items-center justify-center text-walle-brown font-bold text-lg">
+                💰
+              </div>
+            }
+          />
+          <KpiCard 
+            title="TASK Runs" 
+            value={stats.taskRuns} 
+            hint="Automations executed" 
+            accent="purple" 
+            rightSlot={
+              <div className="w-8 h-8 bg-purple-400 rounded-lg flex items-center justify-center animate-pulse">
+                <span className="text-white font-bold">⚡</span>
+              </div>
+            }
+          />
         </div>
 
         {/* Enhanced Navigation */}
