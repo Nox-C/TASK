@@ -36,30 +36,114 @@ export default function MarketsPage() {
           setCurrentPrice(priceData.price || 0)
           setWatchlist((prev) => prev.map((item) => item.symbol === priceData.symbol ? { ...item, price: priceData.price || 0 } : item))
           setIsConnected(true)
+          
+          // Update chart with real-time data
+          if (chartContainerRef.current && (chartContainerRef.current as any)._lineSeries && priceData.symbol === selectedSymbol) {
+            const lineSeries = (chartContainerRef.current as any)._lineSeries;
+            const timestamp = Math.floor((priceData.timestamp || Date.now()) / 1000);
+            lineSeries.update({
+              time: timestamp,
+              value: priceData.price
+            });
+          }
         }
       },
       onStatusChange: (s) => setIsConnected(s === 'connected'),
     })
     return () => disconnect()
-  }, [])
+  }, [selectedSymbol])
 
   useEffect(() => {
     // Initialize TradingView Lightweight Charts
-    // Note: This would require the lightweight-charts library
-    // For now, we'll show a placeholder
     if (chartContainerRef.current) {
-      chartContainerRef.current.innerHTML = `
-        <div class="flex items-center justify-center h-full bg-gray-700 rounded">
-          <div class="text-center">
-            <div class="text-2xl mb-2">📈</div>
-            <div class="text-lg font-semibold">${selectedSymbol}</div>
-            <div class="text-3xl font-bold text-green-400">$${currentPrice.toLocaleString()}</div>
-            <div class="text-sm text-gray-400 mt-2">TradingView Lightweight Charts</div>
-            <div class="text-xs text-gray-500">Chart will be implemented with lightweight-charts library</div>
-          </div>
-        </div>
-      `;
+      // Clear previous chart
+      chartContainerRef.current.innerHTML = '';
+      
+      // Import and initialize chart
+      import('lightweight-charts').then(({ createChart, ColorType }) => {
+        if (!chartContainerRef.current) return;
+        
+        const chart = createChart(chartContainerRef.current, {
+          width: chartContainerRef.current.clientWidth,
+          height: 400,
+          layout: {
+            background: { type: ColorType.Solid, color: '#1f2937' },
+            textColor: '#d1d5db',
+          },
+          grid: {
+            vertLines: { color: '#374151' },
+            horzLines: { color: '#374151' },
+          },
+          crosshair: {
+            mode: 1,
+          },
+          rightPriceScale: {
+            borderColor: '#485563',
+          },
+          timeScale: {
+            borderColor: '#485563',
+            timeVisible: true,
+            secondsVisible: false,
+          },
+        });
+
+        const lineSeries = chart.addLineSeries({
+          color: '#10b981',
+          lineWidth: 2,
+        });
+
+        // Add some sample data points
+        const now = Date.now();
+        const sampleData = Array.from({ length: 50 }, (_, i) => ({
+          time: Math.floor((now - (50 - i) * 60000) / 1000), // 1 minute intervals
+          value: currentPrice + (Math.random() - 0.5) * currentPrice * 0.02, // ±2% variation
+        }));
+        
+        lineSeries.setData(sampleData);
+
+        // Handle resize
+        const handleResize = () => {
+          if (chartContainerRef.current) {
+            chart.applyOptions({ 
+              width: chartContainerRef.current.clientWidth,
+              height: 400 
+            });
+          }
+        };
+
+        window.addEventListener('resize', handleResize);
+
+        // Store chart reference for cleanup
+        (chartContainerRef.current as any)._chart = chart;
+        (chartContainerRef.current as any)._lineSeries = lineSeries;
+        (chartContainerRef.current as any)._cleanup = () => {
+          window.removeEventListener('resize', handleResize);
+          chart.remove();
+        };
+      }).catch(error => {
+        console.error('Failed to load lightweight-charts:', error);
+        // Fallback to placeholder
+        if (chartContainerRef.current) {
+          chartContainerRef.current.innerHTML = `
+            <div class="flex items-center justify-center h-full bg-gray-700 rounded">
+              <div class="text-center">
+                <div class="text-2xl mb-2">📈</div>
+                <div class="text-lg font-semibold">${selectedSymbol}</div>
+                <div class="text-3xl font-bold text-green-400">$${currentPrice.toLocaleString()}</div>
+                <div class="text-sm text-gray-400 mt-2">Chart Loading...</div>
+              </div>
+            </div>
+          `;
+        }
+      });
     }
+
+    // Cleanup function
+    return () => {
+      if (chartContainerRef.current && (chartContainerRef.current as any)._cleanup) {
+        (chartContainerRef.current as any)._cleanup();
+      }
+    };
   }, [selectedSymbol, currentPrice]);
 
   const addToWatchlist = () => {

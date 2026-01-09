@@ -26,10 +26,21 @@ export class WsGateway implements OnGatewayInit {
 
     // Subscribe to market events and broadcast to clients
     this.marketEvents.onTick((tick) => {
-      this.server.emit("market.price", {
+      const priceData = {
         symbol: tick.symbol,
         price: Number(tick.price),
         timestamp: tick.ts ? new Date(tick.ts).getTime() : Date.now(),
+      };
+      
+      // Emit market price updates
+      this.server.emit("market.price", priceData);
+      
+      // Also emit as market_event for the frontend activity feed
+      this.server.emit("market_event", {
+        type: 'market',
+        message: `${tick.symbol}: $${Number(tick.price).toLocaleString()}`,
+        payload: priceData,
+        ts: priceData.timestamp
       });
     });
   }

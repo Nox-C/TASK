@@ -1,11 +1,13 @@
 {
-  "name": "TASK Control Panel",
-  "short_name": "TASK",
-  "description": "Backtesting control panel with CEX/DEX strategies and premium charts.",
+  "name": "WALL-E Trading Bot Control Panel",
+  "short_name": "WALL-E Bot",
+  "description": "Intelligent trading bot control panel with real-time market data, advanced charting, and comprehensive strategy backtesting.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0b0f19",
-  "theme_color": "#0ea5e9",
+  "orientation": "any",
+  "background_color": "#1f2937",
+  "theme_color": "#fbbf24",
+  "categories": ["finance", "productivity", "business"],
   "icons": [
     {
       "src": "/icon-512.png",
