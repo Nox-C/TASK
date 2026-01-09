@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Api } from '../../lib/api';
 import { Button, Card } from '@task/ui';
+import { BacktestingService, BacktestResult } from '../../lib/backtesting';
 
 interface Strategy {
   id: string;
@@ -95,6 +96,10 @@ export default function CreateBotPage() {
   });
   const [selectedStrategy, setSelectedStrategy] = useState<Strategy | null>(null);
   const [loading, setLoading] = useState(false);
+  const [backtestPeriod, setBacktestPeriod] = useState('Last 30 Days');
+  const [initialCapital, setInitialCapital] = useState(10000);
+  const [backtestResult, setBacktestResult] = useState<BacktestResult | null>(null);
+  const [backtestLoading, setBacktestLoading] = useState(false);
 
   const handleStrategySelect = (strategy: Strategy) => {
     setSelectedStrategy(strategy);
@@ -124,6 +129,33 @@ export default function CreateBotPage() {
         [key]: value
       }
     }));
+  };
+
+  const handleRunBacktest = async () => {
+    if (!selectedStrategy) return;
+    
+    setBacktestLoading(true);
+    try {
+      const period = BacktestingService.formatBacktestPeriod(backtestPeriod);
+      const result = await BacktestingService.runBacktest({
+        strategy: {
+          id: selectedStrategy.id,
+          name: selectedStrategy.name,
+          type: selectedStrategy.type,
+          parameters: botConfig.parameters
+        },
+        riskManagement: botConfig.riskManagement,
+        tradingPairs: botConfig.tradingPairs,
+        period,
+        initialCapital
+      });
+      setBacktestResult(result);
+    } catch (error) {
+      console.error('Backtesting failed:', error);
+      alert('Backtesting failed. Please check your parameters and try again.');
+    } finally {
+      setBacktestLoading(false);
+    }
   };
 
   const handleCreateBot = async () => {
@@ -284,25 +316,232 @@ export default function CreateBotPage() {
 
         {selectedStrategy?.type === 'manual' && (
           <div>
-            <h3 className="text-lg font-semibold text-white mb-4">Custom Parameters</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Entry Signal</label>
-                <select className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-walle-yellow focus:outline-none text-white">
-                  <option>RSI Oversold</option>
-                  <option>MACD Crossover</option>
-                  <option>Moving Average Cross</option>
-                  <option>Custom Indicator</option>
-                </select>
+            <h3 className="text-lg font-semibold text-white mb-4">Advanced Strategy Parameters</h3>
+            
+            {/* Entry Signals */}
+            <div className="mb-6">
+              <h4 className="text-md font-medium text-gray-300 mb-3">Entry Signals</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Primary Entry Signal</label>
+                  <select className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-walle-yellow focus:outline-none text-white">
+                    <option>RSI Oversold</option>
+                    <option>MACD Crossover</option>
+                    <option>Moving Average Cross</option>
+                    <option>Bollinger Bands</option>
+                    <option>Volume Spike</option>
+                    <option>Custom Indicator</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Secondary Entry Signal</label>
+                  <select className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-walle-yellow focus:outline-none text-white">
+                    <option>None</option>
+                    <option>Volume Confirmation</option>
+                    <option>Trend Confirmation</option>
+                    <option>Support/Resistance</option>
+                  </select>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Exit Signal</label>
-                <select className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-walle-yellow focus:outline-none text-white">
-                  <option>Take Profit/Stop Loss</option>
-                  <option>RSI Overbought</option>
-                  <option>MACD Divergence</option>
-                  <option>Time-based Exit</option>
-                </select>
+            </div>
+
+            {/* Technical Indicators */}
+            <div className="mb-6">
+              <h4 className="text-md font-medium text-gray-300 mb-3">Technical Indicators</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">RSI Period</label>
+                  <input
+                    type="number"
+                    defaultValue="14"
+                    min="5"
+                    max="50"
+                    className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-walle-yellow focus:outline-none text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">RSI Oversold</label>
+                  <input
+                    type="number"
+                    defaultValue="30"
+                    min="10"
+                    max="40"
+                    className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-walle-yellow focus:outline-none text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">RSI Overbought</label>
+                  <input
+                    type="number"
+                    defaultValue="70"
+                    min="60"
+                    max="90"
+                    className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-walle-yellow focus:outline-none text-white"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* MACD Parameters */}
+            <div className="mb-6">
+              <h4 className="text-md font-medium text-gray-300 mb-3">MACD Settings</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Fast Period</label>
+                  <input
+                    type="number"
+                    defaultValue="12"
+                    min="5"
+                    max="20"
+                    className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-walle-yellow focus:outline-none text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Slow Period</label>
+                  <input
+                    type="number"
+                    defaultValue="26"
+                    min="20"
+                    max="40"
+                    className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-walle-yellow focus:outline-none text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Signal Period</label>
+                  <input
+                    type="number"
+                    defaultValue="9"
+                    min="5"
+                    max="15"
+                    className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-walle-yellow focus:outline-none text-white"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Moving Averages */}
+            <div className="mb-6">
+              <h4 className="text-md font-medium text-gray-300 mb-3">Moving Averages</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Fast MA Period</label>
+                  <input
+                    type="number"
+                    defaultValue="20"
+                    min="5"
+                    max="50"
+                    className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-walle-yellow focus:outline-none text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Slow MA Period</label>
+                  <input
+                    type="number"
+                    defaultValue="50"
+                    min="20"
+                    max="200"
+                    className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-walle-yellow focus:outline-none text-white"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Exit Signals */}
+            <div className="mb-6">
+              <h4 className="text-md font-medium text-gray-300 mb-3">Exit Signals</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Primary Exit Signal</label>
+                  <select className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-walle-yellow focus:outline-none text-white">
+                    <option>Take Profit/Stop Loss</option>
+                    <option>RSI Overbought</option>
+                    <option>MACD Divergence</option>
+                    <option>Moving Average Cross</option>
+                    <option>Time-based Exit</option>
+                    <option>Trailing Stop</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Exit Confirmation</label>
+                  <select className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-walle-yellow focus:outline-none text-white">
+                    <option>None</option>
+                    <option>Volume Confirmation</option>
+                    <option>Multiple Timeframe</option>
+                    <option>Momentum Confirmation</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Position Sizing */}
+            <div className="mb-6">
+              <h4 className="text-md font-medium text-gray-300 mb-3">Position Sizing</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Position Size Method</label>
+                  <select className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-walle-yellow focus:outline-none text-white">
+                    <option>Fixed Amount</option>
+                    <option>Percentage of Portfolio</option>
+                    <option>Kelly Criterion</option>
+                    <option>Volatility-based</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Base Amount ($)</label>
+                  <input
+                    type="number"
+                    defaultValue="1000"
+                    min="100"
+                    max="10000"
+                    className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-walle-yellow focus:outline-none text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Max Positions</label>
+                  <input
+                    type="number"
+                    defaultValue="3"
+                    min="1"
+                    max="10"
+                    className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-walle-yellow focus:outline-none text-white"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Advanced Options */}
+            <div className="mb-6">
+              <h4 className="text-md font-medium text-gray-300 mb-3">Advanced Options</h4>
+              <div className="space-y-3">
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="rounded border-gray-600 text-walle-yellow focus:ring-walle-yellow"
+                  />
+                  <span className="text-white">Enable trailing stop loss</span>
+                </label>
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="rounded border-gray-600 text-walle-yellow focus:ring-walle-yellow"
+                  />
+                  <span className="text-white">Use multiple timeframe analysis</span>
+                </label>
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="rounded border-gray-600 text-walle-yellow focus:ring-walle-yellow"
+                  />
+                  <span className="text-white">Enable dynamic position sizing</span>
+                </label>
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    defaultChecked
+                    className="rounded border-gray-600 text-walle-yellow focus:ring-walle-yellow"
+                  />
+                  <span className="text-white">Send notifications on trades</span>
+                </label>
               </div>
             </div>
           </div>
@@ -327,7 +566,7 @@ export default function CreateBotPage() {
 
   const renderStep3 = () => (
     <Card className="p-8">
-      <h2 className="text-2xl font-bold text-white mb-6">Risk Management</h2>
+      <h2 className="text-2xl font-bold text-white mb-6">Risk Management & Backtesting</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
@@ -404,18 +643,101 @@ export default function CreateBotPage() {
         </div>
       </div>
 
-      <div className="mt-8 p-4 bg-walle-yellow/10 border border-walle-yellow/30 rounded-lg">
-        <h3 className="text-lg font-semibold text-walle-yellow mb-2">⚠️ Risk Assessment</h3>
-        <p className="text-gray-300 text-sm">
-          Based on your settings, this bot has a{' '}
-          <span className={`font-bold ${
-            selectedStrategy?.riskLevel === 'low' ? 'text-green-400' :
-            selectedStrategy?.riskLevel === 'medium' ? 'text-yellow-400' : 'text-red-400'
-          }`}>
-            {selectedStrategy?.riskLevel?.toUpperCase()} RISK
-          </span>{' '}
-          profile. Make sure you understand the potential losses before proceeding.
-        </p>
+      <div className="mt-8 space-y-6">
+        {/* Backtesting Section */}
+        <div className="p-6 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+          <h3 className="text-lg font-semibold text-blue-400 mb-4">📊 Strategy Backtesting</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Backtest Period</label>
+              <select 
+                value={backtestPeriod}
+                onChange={(e) => setBacktestPeriod(e.target.value)}
+                className="w-full p-2 bg-gray-700 rounded border border-gray-600 focus:border-blue-400 focus:outline-none text-white text-sm"
+              >
+                <option>Last 30 Days</option>
+                <option>Last 90 Days</option>
+                <option>Last 6 Months</option>
+                <option>Last Year</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Initial Capital</label>
+              <input
+                type="number"
+                value={initialCapital}
+                onChange={(e) => setInitialCapital(Number(e.target.value))}
+                className="w-full p-2 bg-gray-700 rounded border border-gray-600 focus:border-blue-400 focus:outline-none text-white text-sm"
+              />
+            </div>
+            <div className="flex items-end">
+              <Button
+                variant="secondary"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={handleRunBacktest}
+                disabled={backtestLoading || !selectedStrategy}
+              >
+                {backtestLoading ? '🔄 Running...' : '🔬 Run Backtest'}
+              </Button>
+            </div>
+          </div>
+          
+          {/* Backtest Results */}
+          {backtestResult && (
+            <div className="mt-6 p-4 bg-gray-800 rounded-lg">
+              <h4 className="text-lg font-semibold text-white mb-4">📊 Backtest Results</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-400">
+                    {backtestResult.summary.totalReturn.toFixed(1)}%
+                  </div>
+                  <div className="text-xs text-gray-400">Total Return</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-400">
+                    {backtestResult.summary.winRate.toFixed(1)}%
+                  </div>
+                  <div className="text-xs text-gray-400">Win Rate</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-400">
+                    {backtestResult.summary.totalTrades}
+                  </div>
+                  <div className="text-xs text-gray-400">Total Trades</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-yellow-400">
+                    {backtestResult.summary.sharpeRatio.toFixed(2)}
+                  </div>
+                  <div className="text-xs text-gray-400">Sharpe Ratio</div>
+                </div>
+              </div>
+              <div className="text-sm text-gray-400">
+                💰 Net Profit: ${backtestResult.performance.netProfit.toLocaleString()} | 
+                📉 Max Drawdown: {backtestResult.summary.maxDrawdown.toFixed(1)}% | 
+                🎯 Profit Factor: {backtestResult.summary.profitFactor.toFixed(2)}
+              </div>
+            </div>
+          )}
+          <div className="text-xs text-gray-400">
+            Backtesting will simulate your strategy against historical data to show potential performance
+          </div>
+        </div>
+
+        {/* Risk Assessment */}
+        <div className="p-4 bg-walle-yellow/10 border border-walle-yellow/30 rounded-lg">
+          <h3 className="text-lg font-semibold text-walle-yellow mb-2">⚠️ Risk Assessment</h3>
+          <p className="text-gray-300 text-sm">
+            Based on your settings, this bot has a{' '}
+            <span className={`font-bold ${
+              selectedStrategy?.riskLevel === 'low' ? 'text-green-400' :
+              selectedStrategy?.riskLevel === 'medium' ? 'text-yellow-400' : 'text-red-400'
+            }`}>
+              {selectedStrategy?.riskLevel?.toUpperCase()} RISK
+            </span>{' '}
+            profile. Make sure you understand the potential losses before proceeding.
+          </p>
+        </div>
       </div>
 
       <div className="flex justify-between mt-8">
