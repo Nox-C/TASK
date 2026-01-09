@@ -3,3 +3,14 @@ node_modules
 dist
 coverage
 .DS_Store
+
+# Next.js
+.next/
+out/
+
+# Turbo
+.turbo/
+
+# Build artifacts
+*.log
+*.pack.gz
