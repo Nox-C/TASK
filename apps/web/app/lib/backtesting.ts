@@ -85,7 +85,10 @@ export class BacktestingService {
       // Aggregate results from all trading pairs
       return this.aggregateResults(results, config);
     } catch (error) {
-      console.error('Backtesting failed:', error);
+      // Log error for debugging in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Backtesting failed:', error);
+      }
       throw new Error('Failed to run backtest. Please check your parameters and try again.');
     }
   }

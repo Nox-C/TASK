@@ -151,7 +151,9 @@ export default function CreateBotPage() {
       });
       setBacktestResult(result);
     } catch (error) {
-      console.error('Backtesting failed:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Backtesting failed:', error);
+      }
       alert('Backtesting failed. Please check your parameters and try again.');
     } finally {
       setBacktestLoading(false);
@@ -169,7 +171,10 @@ export default function CreateBotPage() {
       // Redirect to bots page
       window.location.href = '/bots';
     } catch (error) {
-      console.error('Failed to create bot:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to create bot:', error);
+      }
+      alert('Failed to create bot. Please try again.');
     } finally {
       setLoading(false);
     }
