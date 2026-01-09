@@ -1,9 +1,8 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge, Button, Card } from "@task/ui";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
+import { CardHeader, CardContent, CardTitle } from "../../components/ui/card";
 import {
   Activity,
   AlertCircle,
@@ -94,12 +93,12 @@ export default function ConnectionsPage() {
 
   const getStatusBadge = (status: string) => {
     const variants = {
-      connected: "default",
-      disconnected: "secondary",
-      error: "destructive",
-    };
+      connected: "success",
+      disconnected: "warning",
+      error: "danger",
+    } as const;
     return (
-      <Badge variant={variants[status as keyof typeof variants]}>
+      <Badge variant={variants[status as keyof typeof variants] || "default"}>
         {status}
       </Badge>
     );
@@ -339,12 +338,12 @@ export default function ConnectionsPage() {
 
         <Tabs defaultValue="connections" className="space-y-6">
           <TabsList>
-            <TabsTrigger value="connections">Connections</TabsTrigger>
-            <TabsTrigger value="permissions">Permissions</TabsTrigger>
-            <TabsTrigger value="logs">Activity Logs</TabsTrigger>
+            <TabsTrigger active>Connections</TabsTrigger>
+            <TabsTrigger>Permissions</TabsTrigger>
+            <TabsTrigger>Activity Logs</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="connections">
+          <TabsContent>
             <div className="space-y-4">
               {connections.map((connection) => (
                 <Card key={connection.id}>
@@ -386,7 +385,7 @@ export default function ConnectionsPage() {
                           {connection.permissions.map((perm) => (
                             <Badge
                               key={perm}
-                              variant="outline"
+                              variant="info"
                               className="text-xs"
                             >
                               {perm}
@@ -400,14 +399,14 @@ export default function ConnectionsPage() {
                           {connection.features.slice(0, 2).map((feature) => (
                             <Badge
                               key={feature}
-                              variant="secondary"
+                              variant="default"
                               className="text-xs"
                             >
                               {feature}
                             </Badge>
                           ))}
                           {connection.features.length > 2 && (
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge variant="default" className="text-xs">
                               +{connection.features.length - 2}
                             </Badge>
                           )}
@@ -418,7 +417,7 @@ export default function ConnectionsPage() {
                     <div className="flex gap-2">
                       {connection.status === "connected" ? (
                         <Button
-                          variant="destructive"
+                          variant="danger"
                           size="sm"
                           onClick={() => disconnect(connection.id)}
                         >
@@ -445,7 +444,7 @@ export default function ConnectionsPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="permissions">
+          <TabsContent>
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -480,7 +479,7 @@ export default function ConnectionsPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="logs">
+          <TabsContent>
             <Card>
               <CardHeader>
                 <CardTitle>Connection Activity</CardTitle>

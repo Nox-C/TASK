@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Card, Button, StatusPill, Skeleton } from "@task/ui";
 import { connectActivity } from "../lib/ws";
+import { createChart, ColorType, LineSeries } from "lightweight-charts";
 
 interface PriceTick {
   symbol: string;
@@ -87,7 +88,7 @@ export default function MarketsPage() {
           },
         });
 
-        const lineSeries = chart.addLineSeries({
+        const lineSeries = chart.addSeries(LineSeries, {
           color: '#10b981',
           lineWidth: 2,
         });
@@ -95,11 +96,11 @@ export default function MarketsPage() {
         // Add some sample data points
         const now = Date.now();
         const sampleData = Array.from({ length: 50 }, (_, i) => ({
-          time: Math.floor((now - (50 - i) * 60000) / 1000), // 1 minute intervals
+          time: Math.floor((now - (50 - i) * 60000) / 1000) as any, // 1 minute intervals
           value: currentPrice + (Math.random() - 0.5) * currentPrice * 0.02, // ±2% variation
         }));
         
-        lineSeries.setData(sampleData);
+        lineSeries.setData(sampleData as any);
 
         // Handle resize
         const handleResize = () => {

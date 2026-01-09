@@ -23,12 +23,9 @@ export default function TasksPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [tasksData, runsData] = await Promise.all([
-          Api.tasks.list(),
-          Api.tasks.runs(),
-        ]);
+        const tasksData = await Api.tasks.list();
         setTasks(tasksData);
-        setTaskRuns(runsData);
+        setTaskRuns([]); // TODO: Implement task runs API
         setLoading(false);
       } catch (error) {
         console.error("Failed to fetch tasks:", error);

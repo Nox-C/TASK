@@ -21,7 +21,13 @@
         "name": "next"
       }
     ],
-    "target": "ES2017"
+    "target": "ES2017",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./app/*"],
+      "@task/ui": ["../../packages/ui/src/index.tsx"],
+      "@task/shared": ["../../packages/shared/src/index.ts"]
+    }
   },
   "include": [
     "next-env.d.ts",

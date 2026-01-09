@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import { cn } from '@task/ui';
 import React from 'react';
 
 export interface TabsProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -36,10 +36,7 @@ export function TabsTrigger({ active, className, children, ...props }: TabsTrigg
     <a
       className={cn(
         'block px-3 py-2 text-sm font-medium rounded-md',
-        {
-          'bg-gray-900 text-white hover:bg-gray-800': active,
-          'text-gray-400 hover:text-gray-200': !active,
-        },
+        active ? 'bg-gray-900 text-white hover:bg-gray-800' : 'text-gray-400 hover:text-gray-200',
         className
       )}
       {...props}

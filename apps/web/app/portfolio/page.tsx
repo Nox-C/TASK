@@ -41,7 +41,7 @@ export default function PortfolioPage() {
       try {
         // Fetch PnL snapshots
         const pnlData = await Api.pnl.snapshots();
-        setPnlSnapshots(pnlData);
+        setPnlSnapshots(pnlData as any);
 
         // Mock balances and positions for now
         setBalances([

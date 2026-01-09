@@ -4,18 +4,18 @@ import { z } from 'zod';
 export const CreateBotSchema = z.object({
   name: z.string().min(1),
   strategyId: z.string().uuid(),
-  riskParams: z.record(z.any()).optional()
+  riskParams: z.record(z.string(), z.any()).optional()
 });
 
 export const CreateTaskSchema = z.object({
   name: z.string().min(1),
   triggers: z.array(z.object({
     type: z.enum(['cron', 'webhook']),
-    config: z.record(z.any())
+    config: z.record(z.string(), z.any())
   })),
   actions: z.array(z.object({
     type: z.enum(['bot.start', 'bot.stop', 'notify']),
-    config: z.record(z.any())
+    config: z.record(z.string(), z.any())
   }))
 });
 

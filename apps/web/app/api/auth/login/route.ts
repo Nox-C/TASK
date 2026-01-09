@@ -1,6 +1,15 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
+interface ErrorResponse {
+  message: string;
+}
+
+interface LoginResponse {
+  token: string;
+  user: any;
+}
+
 export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();
@@ -25,7 +34,8 @@ export async function POST(request: Request) {
     const { token, user } = await response.json() as LoginResponse;
 
     // Set HTTP-only cookie with the token
-    cookies().set({
+    const cookieStore = await cookies();
+    cookieStore.set({
       name: 'auth_token',
       value: token,
       httpOnly: true,

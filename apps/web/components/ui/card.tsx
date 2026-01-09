@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import { cn } from '@task/ui';
 import React from 'react';
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {

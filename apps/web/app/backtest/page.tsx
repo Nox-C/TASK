@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Api } from "../lib/api";
 import { Button, Card, KpiCard, Skeleton } from "@task/ui";
-import { createChart, ColorType } from "lightweight-charts";
+import { createChart, ColorType, LineSeries } from "lightweight-charts";
 
 interface BacktestReport {
   ticksPlayed?: number;
@@ -60,7 +60,7 @@ export default function BacktestPage() {
       const price = Number(f.price);
       const isBuy = i % 2 === 0; // naive inference; replace with side when available
       cash += isBuy ? -qty * price : qty * price;
-      data.push({ time: Math.floor(Number(f.ts) / 1000), value: cash });
+      data.push({ time: Math.floor(Number(f.ts) / 1000) as any, value: cash });
     }
 
     // Clear previous
@@ -82,10 +82,10 @@ export default function BacktestPage() {
     });
 
     // Glow underlay then crisp line to simulate depth
-    const glow = chart.addLineSeries({ color: 'rgba(34,197,94,0.35)', lineWidth: 10 });
-    glow.setData(data);
-    const line = chart.addLineSeries({ color: 'rgba(34,197,94,1)', lineWidth: 3 });
-    line.setData(data);
+    const glow = chart.addSeries(LineSeries, { color: 'rgba(34,197,94,0.35)' });
+    glow.setData(data as any);
+    const line = chart.addSeries(LineSeries, { color: 'rgba(34,197,94,1)' });
+    line.setData(data as any);
 
     const onResize = () => chart.applyOptions({ width: el.clientWidth, height: el.clientHeight });
     window.addEventListener('resize', onResize);

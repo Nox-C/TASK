@@ -9,7 +9,7 @@ interface User {
 
 export async function GET() {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const token = cookieStore.get("auth_token");
 
     // In a real app, you would validate the token and fetch user data
