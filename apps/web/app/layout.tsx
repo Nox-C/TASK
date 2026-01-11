@@ -14,7 +14,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <head>
-        <meta name="theme-color" content="#0ea5e9" />
+        <meta name="theme-color" content="#d97706" />
       </head>
       <body className="min-h-screen antialiased">
         <AuthProvider>

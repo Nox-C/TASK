@@ -43,13 +43,13 @@ export default function Page() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-900 text-white p-6">
+      <main className="min-h-screen bg-walle-gray-950 text-walle-text-primary p-6">
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 bg-gray-700 rounded-xl" />
+            <div className="w-16 h-16 bg-walle-gray-700 rounded-xl" />
             <div>
-              <div className="h-6 w-64 bg-gray-700 rounded mb-2" />
-              <div className="h-4 w-80 bg-gray-700 rounded" />
+              <div className="h-6 w-64 bg-walle-gray-700 rounded mb-2" />
+              <div className="h-4 w-80 bg-walle-gray-700 rounded" />
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -65,7 +65,7 @@ export default function Page() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-900 text-white p-6">
+    <main className="min-h-screen bg-walle-gray-950 text-walle-text-primary p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header with WALLe Icon */}
         <header className="mb-8 flex items-center space-x-4">
@@ -83,74 +83,74 @@ export default function Page() {
         </header>
 
         {/* WALL-E Branding Section */}
-        <div className="mb-8 p-8 bg-gradient-to-br from-walle-yellow via-walle-orange to-walle-brown rounded-2xl text-center relative overflow-hidden">
+        <div className="walle-card mb-8 p-8 text-center relative overflow-hidden">
           {/* Background pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-4 left-4 w-8 h-8 bg-white rounded-full"></div>
-            <div className="absolute top-12 right-8 w-4 h-4 bg-white rounded-full"></div>
-            <div className="absolute bottom-8 left-12 w-6 h-6 bg-white rounded-full"></div>
-            <div className="absolute bottom-4 right-4 w-3 h-3 bg-white rounded-full"></div>
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute top-4 left-4 w-8 h-8 bg-walle-yellow-500 rounded-full"></div>
+            <div className="absolute top-12 right-8 w-4 h-4 bg-walle-orange-500 rounded-full"></div>
+            <div className="absolute bottom-8 left-12 w-6 h-6 bg-walle-yellow-500 rounded-full"></div>
+            <div className="absolute bottom-4 right-4 w-3 h-3 bg-walle-orange-500 rounded-full"></div>
           </div>
           
           <div className="relative z-10 flex items-center justify-center space-x-6 mb-6">
             <img
               src="/wall-e-icon.png"
               alt="WALL-E"
-              className="w-28 h-28 rounded-2xl border-4 border-white shadow-2xl animate-walleGlow"
+              className="w-28 h-28 rounded-2xl border-4 border-walle-yellow-500 shadow-2xl walle-heartbeat"
             />
             <div className="text-left">
-              <h2 className="text-4xl font-bold text-white drop-shadow-lg">WALL-E</h2>
-              <p className="text-white/90 text-lg font-medium">Intelligent Trading Automation</p>
+              <h2 className="text-4xl font-bold text-walle-yellow-400 drop-shadow-lg">WALL-E</h2>
+              <p className="text-walle-gray-200 text-lg font-medium">Intelligent Trading Automation</p>
               <div className="flex items-center space-x-2 mt-2">
-                <div className="w-2 h-2 bg-walle-green rounded-full animate-pulse"></div>
-                <span className="text-white/80 text-sm">System Online</span>
+                <div className="w-2 h-2 bg-walle-green-500 rounded-full walle-pulse"></div>
+                <span className="text-walle-gray-300 text-sm">System Online</span>
               </div>
             </div>
           </div>
-          <p className="text-white text-xl font-semibold drop-shadow-md relative z-10">
+          <p className="text-walle-gray-200 text-xl font-semibold drop-shadow-md relative z-10">
             🤖 Powered by Advanced AI & Machine Learning 🌱
           </p>
         </div>
 
         {/* System Health */}
-        <div className="mb-6 p-4 bg-gray-800 rounded-lg">
-          <h2 className="text-lg font-semibold mb-3">System Health</h2>
+        <div className="walle-card mb-6 p-4">
+          <h2 className="text-lg font-semibold mb-3 text-walle-gray-100">System Health</h2>
           <div className="flex space-x-6">
             <div className="flex items-center">
               <div
                 className={`w-3 h-3 rounded-full mr-2 ${
                   health.api === "healthy"
-                    ? "bg-green-500"
+                    ? "bg-walle-green-500 shadow-sm shadow-walle-green-500/50"
                     : health.api === "degraded"
-                    ? "bg-yellow-500"
-                    : "bg-red-500"
+                    ? "bg-walle-yellow-500 shadow-sm shadow-walle-yellow-500/50"
+                    : "bg-red-500 shadow-sm shadow-red-500/50"
                 }`}
               ></div>
-              <span>API</span>
+              <span className="text-walle-gray-200">API</span>
             </div>
             <div className="flex items-center">
               <div
                 className={`w-3 h-3 rounded-full mr-2 ${
                   health.database === "healthy"
-                    ? "bg-green-500"
+                    ? "bg-walle-green-500 shadow-sm shadow-walle-green-500/50"
                     : health.database === "degraded"
-                    ? "bg-yellow-500"
-                    : "bg-red-500"
+                    ? "bg-walle-yellow-500 shadow-sm shadow-walle-yellow-500/50"
+                    : "bg-red-500 shadow-sm shadow-red-500/50"
                 }`}
               ></div>
-              <span>Database</span>
+              <span className="text-walle-gray-200">Database</span>
             </div>
             <div className="flex items-center">
               <div
                 className={`w-3 h-3 rounded-full mr-2 ${
                   health.worker === "healthy"
-                    ? "bg-green-500"
+                    ? "bg-walle-green-500 shadow-sm shadow-walle-green-500/50"
                     : health.worker === "degraded"
-                    ? "bg-yellow-500"
-                    : "bg-red-500"
+                    ? "bg-walle-yellow-500 shadow-sm shadow-walle-yellow-500/50"
+                    : "bg-red-500 shadow-sm shadow-red-500/50"
                 }`}
               ></div>
-              <span>Worker</span>
+              <span className="text-walle-gray-200">Worker</span>
             </div>
           </div>
         </div>
@@ -166,7 +166,7 @@ export default function Page() {
               <img 
                 src="/wall-e-icon.png" 
                 alt="WALL-E" 
-                className="w-8 h-8 rounded-lg animate-float" 
+                className="w-8 h-8 rounded-lg walle-float" 
               />
             } 
           />
@@ -177,7 +177,7 @@ export default function Page() {
             accent="green" 
             rightSlot={
               <div className="flex items-center space-x-1">
-                <div className="w-8 h-8 bg-walle-green rounded-full animate-pulse flex items-center justify-center">
+                <div className="w-8 h-8 bg-walle-green-500 rounded-full walle-pulse flex items-center justify-center">
                   <span className="text-white text-xs font-bold">●</span>
                 </div>
               </div>
@@ -189,7 +189,7 @@ export default function Page() {
             hint="Total assets under management" 
             accent="yellow" 
             rightSlot={
-              <div className="w-8 h-8 bg-walle-yellow rounded-full flex items-center justify-center text-walle-brown font-bold text-lg">
+              <div className="w-8 h-8 bg-walle-yellow-500 rounded-full flex items-center justify-center text-walle-brown-700 font-bold text-lg">
                 💰
               </div>
             }
@@ -198,9 +198,9 @@ export default function Page() {
             title="TASK Runs" 
             value={stats.taskRuns} 
             hint="Automations executed" 
-            accent="purple" 
+            accent="yellow" 
             rightSlot={
-              <div className="w-8 h-8 bg-purple-400 rounded-lg flex items-center justify-center animate-pulse">
+              <div className="w-8 h-8 bg-walle-orange-500 rounded-lg flex items-center justify-center walle-pulse">
                 <span className="text-white font-bold">⚡</span>
               </div>
             }
@@ -209,83 +209,67 @@ export default function Page() {
 
         {/* Enhanced Navigation */}
         <nav className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Link
-            href="/dashboard"
-            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 p-4 rounded-lg text-center transition-all transform hover:scale-105 shadow-lg"
-          >
+          <Link href="/dashboard" className="walle-nav-card">
             <div className="flex items-center justify-center mb-2">
               <img
                 src="/wall-e-icon.png"
                 alt="WALLe"
-                className="w-8 h-8 rounded mr-2"
+                className="w-8 h-8 rounded mr-2 walle-float"
               />
-              <h3 className="font-semibold">Dashboard</h3>
+              <h3 className="font-semibold text-walle-gray-100">Dashboard</h3>
             </div>
-            <p className="text-sm text-blue-200">System Overview</p>
+            <p className="text-sm text-walle-gray-300">System Overview</p>
           </Link>
-          <Link
-            href="/markets"
-            className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 p-4 rounded-lg text-center transition-all transform hover:scale-105 shadow-lg"
-          >
+          <Link href="/markets" className="walle-nav-card">
             <div className="flex items-center justify-center mb-2">
-              <div className="w-8 h-8 bg-green-400 rounded-full mr-2 animate-pulse"></div>
-              <h3 className="font-semibold">Markets</h3>
+              <div className="w-8 h-8 bg-walle-green-500 rounded-full mr-2 walle-pulse"></div>
+              <h3 className="font-semibold text-walle-gray-100">Markets</h3>
             </div>
-            <p className="text-sm text-green-200">Charts & Watchlist</p>
+            <p className="text-sm text-walle-gray-300">Charts & Watchlist</p>
           </Link>
-          <Link
-            href="/bots"
-            className="bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 p-4 rounded-lg text-center transition-all transform hover:scale-105 shadow-lg"
-          >
+          <Link href="/bots" className="walle-nav-card">
             <div className="flex items-center justify-center mb-2">
               <img
                 src="/wall-e-icon.png"
                 alt="WALLe"
-                className="w-8 h-8 rounded mr-2"
+                className="w-8 h-8 rounded mr-2 walle-float"
               />
-              <h3 className="font-semibold">Bots</h3>
+              <h3 className="font-semibold text-walle-gray-100">Bots</h3>
             </div>
-            <p className="text-sm text-yellow-200">Manage Trading Bots</p>
+            <p className="text-sm text-walle-gray-300">Manage Trading Bots</p>
           </Link>
-          <Link
-            href="/tasks"
-            className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 p-4 rounded-lg text-center transition-all transform hover:scale-105 shadow-lg"
-          >
+          <Link href="/tasks" className="walle-nav-card">
             <div className="flex items-center justify-center mb-2">
-              <div className="w-8 h-8 bg-purple-400 rounded animate-spin mr-2"></div>
-              <h3 className="font-semibold">TASK Studio</h3>
+              <div className="w-8 h-8 bg-walle-yellow-500 rounded animate-spin mr-2"></div>
+              <h3 className="font-semibold text-walle-gray-100">TASK Studio</h3>
             </div>
-            <p className="text-sm text-purple-200">Automation</p>
+            <p className="text-sm text-walle-gray-300">Automation</p>
           </Link>
-          <Link
-           
-            href="/backtest"
-            className="bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 p-4 rounded-lg text-center transition-all transform hover:scale-105 shadow-lg"
-          >
+          <Link href="/backtest" className="walle-nav-card">
             <div className="flex items-center justify-center mb-2">
-              <div className="w-8 h-8 bg-cyan-400 rounded mr-2"></div>
-              <h3 className="font-semibold">Backtest Lab</h3>
+              <div className="w-8 h-8 bg-walle-blue-500 rounded mr-2"></div>
+              <h3 className="font-semibold text-walle-gray-100">Backtest Lab</h3>
             </div>
-            <p className="text-sm text-cyan-200">Replay & Reports</p>
+            <p className="text-sm text-walle-gray-300">Replay & Reports</p>
           </Link>
         </nav>
 
         {/* Enhanced Active Bots List */}
-        <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-lg p-6 mb-8 border border-gray-600 shadow-xl">
+        <div className="walle-card p-6 mb-8">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center space-x-3">
               <img
                 src="/wall-e-icon.png"
                 alt="WALLe"
-                className="w-10 h-10 rounded"
+                className="w-10 h-10 rounded walle-float"
               />
-              <h2 className="text-2xl font-bold text-white">
+              <h2 className="text-2xl font-bold text-walle-gray-100">
                 Active WALLe Bots
               </h2>
             </div>
             <Link
               href="/bots"
-              className="text-blue-400 hover:text-blue-300 transition-colors"
+              className="text-walle-yellow-400 hover:text-walle-yellow-300 transition-colors"
             >
               View All →
             </Link>
@@ -297,7 +281,7 @@ export default function Page() {
               .map((bot) => (
                 <div
                   key={bot.id}
-                  className="flex justify-between items-center p-4 bg-gray-900 rounded-lg border border-gray-600 hover:border-blue-400 transition-colors"
+                  className="flex justify-between items-center p-4 bg-walle-gray-900/50 rounded-lg border border-walle-gray-700 hover:border-walle-yellow-500/50 transition-all duration-200"
                 >
                   <div className="flex items-center space-x-3">
                     <img
@@ -306,8 +290,8 @@ export default function Page() {
                       className="w-8 h-8 rounded"
                     />
                     <div>
-                      <h4 className="font-semibold text-white">{bot.name}</h4>
-                      <p className="text-sm text-gray-400">
+                      <h4 className="font-semibold text-walle-gray-100">{bot.name}</h4>
+                      <p className="text-sm text-walle-gray-400">
                         Strategy: {bot.strategyId}
                       </p>
                     </div>
@@ -327,8 +311,8 @@ export default function Page() {
                   alt="WALLe"
                   className="w-16 h-16 rounded mx-auto mb-4 opacity-50"
                 />
-                <p className="text-gray-400">No active WALLe bots running</p>
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-walle-gray-400">No active WALLe bots running</p>
+                <p className="text-sm text-walle-gray-500 mt-2">
                   Start a bot to begin automated trading
                 </p>
               </div>
@@ -337,14 +321,14 @@ export default function Page() {
         </div>
 
         {/* Enhanced Latest TASK Runs */}
-        <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-lg p-6 border border-gray-600 shadow-xl">
+        <div className="walle-card p-6">
           <div className="flex items-center space-x-3 mb-4">
             <img
               src="/wall-e-icon.png"
               alt="WALLe"
-              className="w-10 h-10 rounded"
+              className="w-10 h-10 rounded walle-float"
             />
-            <h2 className="text-2xl font-bold text-white">
+            <h2 className="text-2xl font-bold text-walle-gray-100">
               Latest WALLe TASK Runs
             </h2>
           </div>

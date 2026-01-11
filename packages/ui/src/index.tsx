@@ -18,14 +18,14 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props
 }) => {
-  const base = 'inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-gray-900 disabled:opacity-50 disabled:pointer-events-none'
+  const base = 'inline-flex items-center justify-center rounded-lg font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-walle-gray-900 disabled:opacity-50 disabled:pointer-events-none transform hover:scale-105 active:scale-95'
   const variants: Record<NonNullable<ButtonProps['variant']>, string> = {
-    default: 'bg-gray-200 hover:bg-gray-300 text-gray-900',
-    primary: 'bg-blue-600 hover:bg-blue-700 text-white',
-    secondary: 'bg-gray-700 hover:bg-gray-600 text-gray-100',
-    danger: 'bg-red-600 hover:bg-red-700 text-white',
-    ghost: 'bg-transparent hover:bg-white/5 text-gray-200',
-    outline: 'border border-gray-600 hover:bg-white/5 text-gray-200',
+    default: 'bg-walle-gray-700 hover:bg-walle-gray-600 text-walle-gray-100 border border-walle-gray-600/50 hover:border-walle-yellow-500/50',
+    primary: 'bg-gradient-to-r from-walle-yellow-600 to-walle-yellow-500 hover:from-walle-yellow-500 hover:to-walle-orange-500 text-white shadow-lg hover:shadow-xl hover:shadow-walle-yellow-500/25',
+    secondary: 'bg-walle-gray-800 hover:bg-walle-gray-700 text-walle-gray-100 border border-walle-gray-700 hover:border-walle-gray-600',
+    danger: 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white shadow-lg hover:shadow-xl hover:shadow-red-500/25',
+    ghost: 'bg-transparent hover:bg-walle-gray-800/50 text-walle-gray-200 hover:text-walle-yellow-400',
+    outline: 'border border-walle-gray-600 hover:bg-walle-gray-800/50 hover:border-walle-yellow-500 text-walle-gray-200 hover:text-walle-yellow-400',
   }
   const sizes: Record<NonNullable<ButtonProps['size']>, string> = {
     sm: 'h-8 px-3 text-sm',
@@ -45,9 +45,9 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export const Card: React.FC<CardProps> = ({ className, variant = 'subtle', ...props }) => {
   const variants: Record<NonNullable<CardProps['variant']>, string> = {
-    subtle: 'bg-gray-800/80 backdrop-blur border border-gray-700',
-    elevated: 'bg-gray-800/90 backdrop-blur border border-gray-700 shadow-elevated',
-    solid: 'bg-gray-800 border border-gray-700',
+    subtle: 'bg-walle-gray-800/80 backdrop-blur-sm border border-walle-gray-700/50 hover:border-walle-yellow-500/30 transition-all duration-300',
+    elevated: 'bg-gradient-to-br from-walle-gray-800/90 to-walle-gray-900/90 backdrop-blur border border-walle-gray-700/50 shadow-2xl hover:shadow-walle-yellow-500/10 hover:border-walle-yellow-500/40 transition-all duration-300',
+    solid: 'bg-walle-gray-800 border border-walle-gray-700 hover:border-walle-gray-600 transition-colors duration-200',
   }
   return <div className={cn('rounded-xl', variants[variant], className)} {...props} />
 }
@@ -59,14 +59,14 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 
 export const Badge: React.FC<BadgeProps> = ({ className, variant = 'default', ...props }) => {
   const variants: Record<NonNullable<BadgeProps['variant']>, string> = {
-    default: 'bg-gray-700 text-gray-100 border border-gray-600',
-    success: 'bg-green-500/20 text-green-300 border border-green-600/40',
-    warning: 'bg-yellow-500/20 text-yellow-200 border border-yellow-600/40',
-    danger: 'bg-red-500/20 text-red-300 border border-red-600/40',
-    info: 'bg-blue-500/20 text-blue-300 border border-blue-600/40',
+    default: 'bg-walle-gray-700/80 text-walle-gray-100 border border-walle-gray-600/50 backdrop-blur-sm',
+    success: 'bg-walle-green-500/20 text-walle-green-300 border border-walle-green-500/40 backdrop-blur-sm shadow-sm shadow-walle-green-500/20',
+    warning: 'bg-walle-yellow-500/20 text-walle-yellow-300 border border-walle-yellow-500/40 backdrop-blur-sm shadow-sm shadow-walle-yellow-500/20',
+    danger: 'bg-red-500/20 text-red-300 border border-red-500/40 backdrop-blur-sm shadow-sm shadow-red-500/20',
+    info: 'bg-walle-blue-500/20 text-walle-blue-300 border border-walle-blue-500/40 backdrop-blur-sm shadow-sm shadow-walle-blue-500/20',
   }
   return (
-    <span className={cn('inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium', variants[variant], className)} {...props} />
+    <span className={cn('inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold', variants[variant], className)} {...props} />
   )
 }
 
@@ -75,15 +75,15 @@ export type StatusKind = 'healthy' | 'degraded' | 'down' | 'connected' | 'discon
 
 export const StatusPill: React.FC<{ status: StatusKind; className?: string }> = ({ status, className }) => {
   const map: Record<StatusKind, string> = {
-    healthy: 'bg-green-500/20 text-green-400 border border-green-600/30',
-    degraded: 'bg-yellow-500/20 text-yellow-300 border border-yellow-600/30',
-    down: 'bg-red-500/20 text-red-400 border border-red-600/30',
-    connected: 'bg-green-500/20 text-green-400 border border-green-600/30',
-    disconnected: 'bg-red-500/20 text-red-400 border border-red-600/30',
-    active: 'bg-green-500/20 text-green-300 border border-green-600/30',
-    inactive: 'bg-gray-600/30 text-gray-300 border border-gray-600/50',
+    healthy: 'bg-walle-green-500/20 text-walle-green-300 border border-walle-green-500/40 shadow-sm shadow-walle-green-500/20',
+    degraded: 'bg-walle-yellow-500/20 text-walle-yellow-300 border border-walle-yellow-500/40 shadow-sm shadow-walle-yellow-500/20',
+    down: 'bg-red-500/20 text-red-300 border border-red-500/40 shadow-sm shadow-red-500/20',
+    connected: 'bg-walle-green-500/20 text-walle-green-300 border border-walle-green-500/40 shadow-sm shadow-walle-green-500/20',
+    disconnected: 'bg-red-500/20 text-red-300 border border-red-500/40 shadow-sm shadow-red-500/20',
+    active: 'bg-walle-green-500/20 text-walle-green-300 border border-walle-green-500/40 shadow-sm shadow-walle-green-500/20',
+    inactive: 'bg-walle-gray-600/30 text-walle-gray-300 border border-walle-gray-600/50',
   }
-  return <span className={cn('inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium', map[status], className)}>{status}</span>
+  return <span className={cn('inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-sm', map[status], className)}>{status}</span>
 }
 
 // KPI Card with accent gradient and slot for sparkline
@@ -99,22 +99,22 @@ export interface KpiCardProps {
 
 export const KpiCard: React.FC<KpiCardProps> = ({ title, value, hint, accent = 'blue', rightSlot, footer, className }) => {
   const accents: Record<NonNullable<KpiCardProps['accent']>, string> = {
-    blue: 'from-blue-800 to-blue-600 border-blue-500/40',
-    green: 'from-green-800 to-green-600 border-green-500/40',
-    yellow: 'from-yellow-800 to-yellow-600 border-yellow-500/40',
-    purple: 'from-purple-800 to-purple-600 border-purple-500/40',
-    red: 'from-red-800 to-red-600 border-red-500/40',
-    cyan: 'from-cyan-800 to-cyan-600 border-cyan-500/40',
+    blue: 'from-walle-blue-800/90 to-walle-blue-700/90 border-walle-blue-500/40 shadow-walle-blue-500/20',
+    green: 'from-walle-green-800/90 to-walle-green-700/90 border-walle-green-500/40 shadow-walle-green-500/20',
+    yellow: 'from-walle-yellow-800/90 to-walle-yellow-700/90 border-walle-yellow-500/40 shadow-walle-yellow-500/20',
+    purple: 'from-purple-800/90 to-purple-700/90 border-purple-500/40 shadow-purple-500/20',
+    red: 'from-red-800/90 to-red-700/90 border-red-500/40 shadow-red-500/20',
+    cyan: 'from-cyan-800/90 to-cyan-700/90 border-cyan-500/40 shadow-cyan-500/20',
   }
   return (
-    <div className={cn('rounded-xl p-6 border shadow-elevated bg-gradient-to-br', accents[accent], className)}>
+    <div className={cn('rounded-xl p-6 border shadow-2xl bg-gradient-to-br backdrop-blur-sm hover:shadow-xl transition-all duration-300', accents[accent], className)}>
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-semibold text-gray-200">{title}</h3>
+        <h3 className="text-sm font-semibold text-walle-gray-200">{title}</h3>
         {rightSlot}
       </div>
       <div className="text-3xl font-bold text-white">{value}</div>
-      {hint && <div className="text-xs text-gray-300 mt-1">{hint}</div>}
-      {footer && <div className="mt-3 text-xs text-gray-400">{footer}</div>}
+      {hint && <div className="text-xs text-walle-gray-300 mt-1">{hint}</div>}
+      {footer && <div className="mt-3 text-xs text-walle-gray-400">{footer}</div>}
     </div>
   )
 }
@@ -134,7 +134,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({ className, rounded = 'md', .
   }
   return (
     <div
-      className={cn('animate-pulse bg-gray-700/60', radius[rounded], className)}
+      className={cn('animate-pulse bg-walle-gray-700/60 backdrop-blur-sm', radius[rounded], className)}
       {...props}
     />
   )
