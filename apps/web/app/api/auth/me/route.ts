@@ -1,38 +1,43 @@
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
 
-interface User {
-  id: string;
-  email: string;
-  name: string;
+type ErrorResponse = {
+  message?: string
 }
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("auth_token");
+    const apiUrl = process.env.API_URL ?? 'http://localhost:3001'
+    const token = cookies().get('auth_token')?.value
 
-    // In a real app, you would validate the token and fetch user data
     if (!token) {
-      return NextResponse.json(
-        { message: "Not authenticated" },
-        { status: 401 }
-      );
+      return NextResponse.json({ message: 'Not authenticated' }, { status: 401 })
     }
 
-    // Mock user data for demonstration
-    const mockUser: User = {
-      id: "123",
-      email: "user@example.com",
-      name: "Demo User",
-    };
+    const res = await fetch(`${apiUrl}/auth/me`, {
+      method: 'GET',
+      headers: {
+        // IMPORTANT: include a space after Bearer
+        Authorization: `Bearer ${token}`,
+      },
+      cache: 'no-store',
+    })
 
-    return NextResponse.json(mockUser);
+    if (!res.ok) {
+      const err = (await res.json().catch(() => ({}))) as ErrorResponse
+      return NextResponse.json(
+        { message: err?.message ?? 'Not authenticated' },
+        { status: 401 }
+      )
+    }
+
+    const user = await res.json()
+    return NextResponse.json(user)
   } catch (error) {
-    console.error("Session error:", error);
+    console.error('Session error:', error)
     return NextResponse.json(
-      { message: "Internal server error" },
+      { message: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
-    );
+    )
   }
 }

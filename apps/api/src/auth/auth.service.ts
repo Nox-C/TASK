@@ -33,6 +33,19 @@ export class AuthService {
   async loginWithCredentials(email: string, password: string) {
     const user = await this.validateUser(email, password);
     if (!user) throw new UnauthorizedException('invalid credentials');
-    return this.login(email, user);
+    const result = await this.login(email, user);
+    return { token: result.accessToken, user };
+  }
+
+  async register(email: string, password: string, name: string) {
+    const user = await this.users.create({ email, password, name });
+    const result = await this.login(email, user);
+    return { token: result.accessToken, user };
+  }
+
+  async getUserFromToken(payload: any) {
+    const user = await this.users.findById(payload.sub);
+    if (!user) throw new UnauthorizedException('User not found');
+    return user;
   }
 }

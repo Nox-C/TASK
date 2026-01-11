@@ -1,56 +1,51 @@
-import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
 
-interface ErrorResponse {
-  message: string;
+type LoginResponse = {
+  token: string
+  user: unknown
 }
 
-interface LoginResponse {
-  token: string;
-  user: any;
+type ErrorResponse = {
+  message?: string
 }
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json();
-    
-    // Call your authentication service here
-    const response = await fetch(`${process.env.API_URL}/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    const apiUrl = process.env.API_URL ?? 'http://localhost:3001'
+    const { email, password } = await request.json()
 
-    if (!response.ok) {
-      const error = await response.json() as ErrorResponse;
+    const res = await fetch(`${apiUrl}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+
+    if (!res.ok) {
+      const err = (await res.json().catch(() => ({}))) as ErrorResponse
       return NextResponse.json(
-        { message: error.message || 'Login failed' },
-        { status: response.status }
-      );
+        { message: err?.message ?? 'Login failed' },
+        { status: res.status }
+      )
     }
 
-    const { token, user } = await response.json() as LoginResponse;
+    const data = (await res.json()) as LoginResponse
 
-    // Set HTTP-only cookie with the token
-    const cookieStore = await cookies();
-    cookieStore.set({
-      name: 'auth_token',
-      value: token,
+    // Set HTTP-only cookie
+    cookies().set('auth_token', data.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/',
       maxAge: 60 * 60 * 24 * 7, // 1 week
-    });
+    })
 
-    return NextResponse.json(user);
+    return NextResponse.json(data.user)
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login error:', error)
     return NextResponse.json(
-      { message: 'Internal server error' },
+      { message: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
-    );
+    )
   }
 }
