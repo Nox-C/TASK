@@ -32,7 +32,8 @@ export async function POST(request: Request) {
     const data = (await res.json()) as LoginResponse
 
     // Set HTTP-only cookie
-    cookies().set('auth_token', data.token, {
+    const cookieStore = await cookies()
+    cookieStore.set('auth_token', data.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

@@ -8,7 +8,8 @@ type ErrorResponse = {
 export async function GET() {
   try {
     const apiUrl = process.env.API_URL ?? 'http://localhost:3001'
-    const token = cookies().get('auth_token')?.value
+    const cookieStore = await cookies()
+    const token = cookieStore.get('auth_token')?.value
 
     if (!token) {
       return NextResponse.json({ message: 'Not authenticated' }, { status: 401 })
