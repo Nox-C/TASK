@@ -17,6 +17,108 @@ export class MarketService {
     return this.prisma.priceTick.findFirst({ where: { symbol }, orderBy: { ts: 'desc' } as any });
   }
 
+  async getOHLCV(symbol: string, timeframe: string = '1m', limit: number = 100) {
+    // Map timeframe to milliseconds
+    const timeframeMs = this.parseTimeframe(timeframe);
+    const endTime = Date.now();
+    const startTime = endTime - (limit * timeframeMs);
+
+    // Try to get data from database first
+    const ticks = await this.prisma.priceTick.findMany({
+      where: {
+        symbol,
+        ts: {
+          gte: new Date(startTime),
+          lte: new Date(endTime)
+        }
+      },
+      orderBy: { ts: 'asc' }
+    });
+
+    // If we have database ticks, aggregate them into OHLCV
+    if (ticks.length > 0) {
+      return this.aggregateToOHLCV(ticks, timeframeMs, limit);
+    }
+
+    // Fallback: Fetch from Binance
+    try {
+      const mapped = this.mapToBinance(symbol);
+      const interval = this.mapTimeframeToBinance(timeframe);
+      const candles = await this.fetchBinanceCandles(mapped, interval, startTime, endTime);
+      
+      return candles.slice(-limit).map(c => ({
+        time: Math.floor(Number(c[0]) / 1000), // Convert to seconds
+        open: Number(c[1]),
+        high: Number(c[2]),
+        low: Number(c[3]),
+        close: Number(c[4]),
+        volume: Number(c[5])
+      }));
+    } catch (err) {
+      console.error('Failed to fetch OHLCV data:', err);
+      return [];
+    }
+  }
+
+  private parseTimeframe(timeframe: string): number {
+    const unit = timeframe.slice(-1);
+    const value = parseInt(timeframe.slice(0, -1)) || 1;
+    
+    switch (unit) {
+      case 'm': return value * 60 * 1000;
+      case 'h': return value * 60 * 60 * 1000;
+      case 'd': return value * 24 * 60 * 60 * 1000;
+      case 'w': return value * 7 * 24 * 60 * 60 * 1000;
+      default: return 60 * 1000; // Default to 1 minute
+    }
+  }
+
+  private mapTimeframeToBinance(timeframe: string): string {
+    // Map our timeframe format to Binance interval format
+    const map: Record<string, string> = {
+      '1m': '1m',
+      '5m': '5m',
+      '15m': '15m',
+      '30m': '30m',
+      '1h': '1h',
+      '4h': '4h',
+      '1d': '1d',
+      '1w': '1w'
+    };
+    return map[timeframe] || '1m';
+  }
+
+  private aggregateToOHLCV(ticks: any[], timeframeMs: number, limit: number) {
+    if (ticks.length === 0) return [];
+
+    const candles: any[] = [];
+    const startTime = Math.floor(ticks[0].ts.getTime() / timeframeMs) * timeframeMs;
+
+    for (let i = 0; i < limit; i++) {
+      const candleStart = startTime + (i * timeframeMs);
+      const candleEnd = candleStart + timeframeMs;
+
+      const candleTicks = ticks.filter(t => {
+        const time = t.ts.getTime();
+        return time >= candleStart && time < candleEnd;
+      });
+
+      if (candleTicks.length > 0) {
+        const prices = candleTicks.map(t => Number(t.price));
+        candles.push({
+          time: Math.floor(candleStart / 1000),
+          open: prices[0],
+          high: Math.max(...prices),
+          low: Math.min(...prices),
+          close: prices[prices.length - 1],
+          volume: candleTicks.length
+        });
+      }
+    }
+
+    return candles;
+  }
+
   async replayTicksFromDb(symbol: string, opts: { fromTs?: string; toTs?: string; delayMs?: number } = {}, cb?: (t:any)=>Promise<void>) {
     const where: any = { symbol };
     if (opts.fromTs) where.ts = { gte: new Date(opts.fromTs) };

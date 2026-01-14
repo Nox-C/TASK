@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
 import { MarketService } from "./market.service";
 
 @Controller("market")
@@ -23,6 +23,15 @@ export class TicksController {
   @Get("ticks/:symbol")
   async latestTick(@Param("symbol") symbol: string) {
     return this.market.latestTick(symbol);
+  }
+
+  @Get("ohlcv/:symbol")
+  async getOHLCV(
+    @Param("symbol") symbol: string,
+    @Query("timeframe") timeframe?: string,
+    @Query("limit") limit?: string
+  ) {
+    return this.market.getOHLCV(symbol, timeframe || "1m", parseInt(limit || "100"));
   }
 
   @Post("test/sample-data")

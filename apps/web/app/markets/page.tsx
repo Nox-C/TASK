@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Card, Button, StatusPill, Skeleton } from "@task/ui";
 import { connectActivity } from "../lib/ws";
-import { createChart, ColorType, LineSeries } from "lightweight-charts";
+import { createChart, ColorType, CandlestickSeries } from "lightweight-charts";
 
 interface PriceTick {
   symbol: string;
@@ -18,28 +18,58 @@ interface WatchlistItem {
   volume: number;
 }
 
+interface ExchangeStatus {
+  name: string;
+  connected: boolean;
+  lastUpdate: number;
+}
+
 export default function MarketsPage() {
   const [selectedSymbol, setSelectedSymbol] = useState("BTC-USD");
   const [currentPrice, setCurrentPrice] = useState(0);
+  const [selectedTimeframe, setSelectedTimeframe] = useState("1h");
+  const [chartType, setChartType] = useState<"candlestick" | "line">("candlestick");
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([
     { symbol: "BTC-USD", price: 45000, change24h: 2.5, volume: 1200000 },
     { symbol: "ETH-USD", price: 3200, change24h: -1.2, volume: 800000 },
     { symbol: "SOL-USD", price: 120, change24h: 5.8, volume: 400000 },
+    { symbol: "ADA-USD", price: 0.62, change24h: 3.2, volume: 250000 },
+    { symbol: "DOT-USD", price: 8.5, change24h: -0.5, volume: 180000 },
   ]);
   const [isConnected, setIsConnected] = useState(false);
+  const [exchanges, setExchanges] = useState<ExchangeStatus[]>([
+    { name: "Binance", connected: false, lastUpdate: 0 },
+    { name: "Coinbase", connected: false, lastUpdate: 0 },
+  ]);
+  const [isLoadingChart, setIsLoadingChart] = useState(false);
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
+  // WebSocket connection for real-time updates
   useEffect(() => {
     const disconnect = connectActivity({
       onEvent: (data) => {
         if ((data as any).type === 'market' && (data as any).payload?.symbol) {
-          const priceData: any = (data as any).payload
-          setCurrentPrice(priceData.price || 0)
-          setWatchlist((prev) => prev.map((item) => item.symbol === priceData.symbol ? { ...item, price: priceData.price || 0 } : item))
-          setIsConnected(true)
+          const priceData: any = (data as any).payload;
+          setCurrentPrice(priceData.price || 0);
+          setWatchlist((prev) => prev.map((item) => 
+            item.symbol === priceData.symbol 
+              ? { ...item, price: priceData.price || 0 } 
+              : item
+          ));
+          setIsConnected(true);
           
-          // Update chart with real-time data
-          if (chartContainerRef.current && (chartContainerRef.current as any)._lineSeries && priceData.symbol === selectedSymbol) {
+          // Update exchange status based on data source
+          if (priceData.source) {
+            setExchanges(prev => prev.map(ex => 
+              ex.name.toLowerCase() === priceData.source?.toLowerCase()
+                ? { ...ex, connected: true, lastUpdate: Date.now() }
+                : ex
+            ));
+          }
+          
+          // Update chart with real-time data for line charts
+          if (chartContainerRef.current && (chartContainerRef.current as any)._lineSeries 
+              && priceData.symbol === selectedSymbol && chartType === "line") {
             const lineSeries = (chartContainerRef.current as any)._lineSeries;
             const timestamp = Math.floor((priceData.timestamp || Date.now()) / 1000);
             lineSeries.update({
@@ -50,102 +80,138 @@ export default function MarketsPage() {
         }
       },
       onStatusChange: (s) => setIsConnected(s === 'connected'),
-    })
-    return () => disconnect()
-  }, [selectedSymbol])
+    });
+    return () => disconnect();
+  }, [selectedSymbol, chartType]);
 
+  // Load chart data
   useEffect(() => {
-    // Initialize TradingView Lightweight Charts
-    if (chartContainerRef.current) {
+    loadChartData();
+  }, [selectedSymbol, selectedTimeframe, chartType]);
+
+  const loadChartData = async () => {
+    if (!chartContainerRef.current) return;
+    
+    setIsLoadingChart(true);
+    chartContainerRef.current.innerHTML = '<div class="flex items-center justify-center h-full"><div class="text-lg text-gray-400">Loading chart data...</div></div>';
+
+    try {
+      // Fetch historical data from API
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/market/ohlcv/${selectedSymbol}?timeframe=${selectedTimeframe}&limit=200`);
+      
+      if (!response.ok) throw new Error('Failed to fetch chart data');
+      
+      const ohlcvData = await response.json();
+      
+      if (!ohlcvData || ohlcvData.length === 0) {
+        throw new Error('No data available');
+      }
+
       // Clear previous chart
+      if ((chartContainerRef.current as any)._cleanup) {
+        (chartContainerRef.current as any)._cleanup();
+      }
       chartContainerRef.current.innerHTML = '';
       
       // Import and initialize chart
-      import('lightweight-charts').then(({ createChart, ColorType }) => {
-        if (!chartContainerRef.current) return;
-        
-        const chart = createChart(chartContainerRef.current, {
-          width: chartContainerRef.current.clientWidth,
-          height: 400,
-          layout: {
-            background: { type: ColorType.Solid, color: '#1f2937' },
-            textColor: '#d1d5db',
-          },
-          grid: {
-            vertLines: { color: '#374151' },
-            horzLines: { color: '#374151' },
-          },
-          crosshair: {
-            mode: 1,
-          },
-          rightPriceScale: {
-            borderColor: '#485563',
-          },
-          timeScale: {
-            borderColor: '#485563',
-            timeVisible: true,
-            secondsVisible: false,
-          },
+      const { createChart, ColorType } = await import('lightweight-charts');
+      
+      if (!chartContainerRef.current) return;
+      
+      const chart = createChart(chartContainerRef.current, {
+        width: chartContainerRef.current.clientWidth,
+        height: 500,
+        layout: {
+          background: { type: ColorType.Solid, color: '#1a1d29' }, // WALL-E dark blue
+          textColor: '#e4c087', // WALL-E yellow-beige
+        },
+        grid: {
+          vertLines: { color: '#2a2e3f' },
+          horzLines: { color: '#2a2e3f' },
+        },
+        crosshair: {
+          mode: 1,
+        },
+        rightPriceScale: {
+          borderColor: '#fbbf24', // WALL-E yellow
+        },
+        timeScale: {
+          borderColor: '#fbbf24', // WALL-E yellow
+          timeVisible: true,
+          secondsVisible: false,
+        },
+      });
+
+      if (chartType === "candlestick") {
+        const candlestickSeries = chart.addCandlestickSeries({
+          upColor: '#10b981', // green
+          downColor: '#ef4444', // red
+          borderUpColor: '#10b981',
+          borderDownColor: '#ef4444',
+          wickUpColor: '#10b981',
+          wickDownColor: '#ef4444',
         });
 
-        const lineSeries = chart.addSeries(LineSeries, {
-          color: '#10b981',
+        candlestickSeries.setData(ohlcvData);
+        (chartContainerRef.current as any)._candlestickSeries = candlestickSeries;
+      } else {
+        const lineSeries = chart.addLineSeries({
+          color: '#fbbf24', // WALL-E yellow
           lineWidth: 2,
         });
 
-        // Add some sample data points
-        const now = Date.now();
-        const sampleData = Array.from({ length: 50 }, (_, i) => ({
-          time: Math.floor((now - (50 - i) * 60000) / 1000) as any, // 1 minute intervals
-          value: currentPrice + (Math.random() - 0.5) * currentPrice * 0.02, // ±2% variation
+        // Convert OHLCV to line data (use close prices)
+        const lineData = ohlcvData.map((candle: any) => ({
+          time: candle.time,
+          value: candle.close
         }));
-        
-        lineSeries.setData(sampleData as any);
 
-        // Handle resize
-        const handleResize = () => {
-          if (chartContainerRef.current) {
-            chart.applyOptions({ 
-              width: chartContainerRef.current.clientWidth,
-              height: 400 
-            });
-          }
-        };
-
-        window.addEventListener('resize', handleResize);
-
-        // Store chart reference for cleanup
-        (chartContainerRef.current as any)._chart = chart;
+        lineSeries.setData(lineData);
         (chartContainerRef.current as any)._lineSeries = lineSeries;
-        (chartContainerRef.current as any)._cleanup = () => {
-          window.removeEventListener('resize', handleResize);
-          chart.remove();
-        };
-      }).catch(error => {
-        console.error('Failed to load lightweight-charts:', error);
-        // Fallback to placeholder
-        if (chartContainerRef.current) {
-          chartContainerRef.current.innerHTML = `
-            <div class="flex items-center justify-center h-full bg-gray-700 rounded">
-              <div class="text-center">
-                <div class="text-2xl mb-2">📈</div>
-                <div class="text-lg font-semibold">${selectedSymbol}</div>
-                <div class="text-3xl font-bold text-green-400">$${currentPrice.toLocaleString()}</div>
-                <div class="text-sm text-gray-400 mt-2">Chart Loading...</div>
-              </div>
-            </div>
-          `;
-        }
-      });
-    }
-
-    // Cleanup function
-    return () => {
-      if (chartContainerRef.current && (chartContainerRef.current as any)._cleanup) {
-        (chartContainerRef.current as any)._cleanup();
       }
-    };
-  }, [selectedSymbol, currentPrice]);
+
+      // Handle resize
+      const handleResize = () => {
+        if (chartContainerRef.current) {
+          chart.applyOptions({ 
+            width: chartContainerRef.current.clientWidth,
+            height: 500
+          });
+        }
+      };
+
+      window.addEventListener('resize', handleResize);
+
+      // Store chart reference for cleanup
+      (chartContainerRef.current as any)._chart = chart;
+      (chartContainerRef.current as any)._cleanup = () => {
+        window.removeEventListener('resize', handleResize);
+        chart.remove();
+      };
+
+      setIsLoadingChart(false);
+    } catch (error) {
+      console.error('Failed to load chart:', error);
+      setIsLoadingChart(false);
+      
+      // Show error placeholder
+      if (chartContainerRef.current) {
+        chartContainerRef.current.innerHTML = `
+          <div class="flex items-center justify-center h-full bg-gray-800 rounded">
+            <div class="text-center">
+              <div class="text-4xl mb-4">⚠️</div>
+              <div class="text-lg font-semibold text-red-400">Failed to load chart data</div>
+              <div class="text-sm text-gray-400 mt-2">${(error as Error).message}</div>
+              <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-walle-yellow text-walle-brown rounded hover:bg-walle-orange">
+                Retry
+              </button>
+            </div>
+          </div>
+        `;
+      }
+    }
+  };
 
   const addToWatchlist = () => {
     const symbol = prompt("Enter symbol (e.g., DOGE-USD):");
@@ -162,30 +228,65 @@ export default function MarketsPage() {
     }
   };
 
+  const timeframes = [
+    { label: "1m", value: "1m" },
+    { label: "5m", value: "5m" },
+    { label: "15m", value: "15m" },
+    { label: "1H", value: "1h" },
+    { label: "4H", value: "4h" },
+    { label: "1D", value: "1d" },
+    { label: "1W", value: "1w" },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
+    <div className="min-h-screen bg-walle-darkblue text-white p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Markets</h1>
-            <p className="text-gray-400">Live price data and charts</p>
+            <h1 className="text-3xl font-bold text-walle-yellow">🤖 Markets - WALL-E Trading</h1>
+            <p className="text-walle-beige">Live price data and advanced charts</p>
           </div>
           <div className="flex items-center space-x-4">
             <div className="flex items-center gap-2">
-              <span className="text-sm">Live Data</span>
+              <span className="text-sm text-walle-beige">Live Data</span>
               <StatusPill status={isConnected ? 'connected' : 'disconnected'} />
             </div>
             <Link href="/"><Button variant="secondary">Back to Home</Button></Link>
           </div>
         </div>
 
+        {/* Exchange Status Bar */}
+        <Card className="p-4 mb-6 bg-walle-darkgray border-walle-rust">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-walle-yellow">Exchange Connections</h3>
+            <div className="flex gap-4">
+              {exchanges.map(ex => (
+                <div key={ex.name} className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${ex.connected ? 'bg-green-500' : 'bg-red-500'} animate-pulse`} />
+                  <span className="text-sm text-walle-beige">{ex.name}</span>
+                  {ex.connected && ex.lastUpdate > 0 && (
+                    <span className="text-xs text-gray-500">
+                      {Math.floor((Date.now() - ex.lastUpdate) / 1000)}s ago
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Watchlist */}
           <div className="lg:col-span-1">
-            <Card className="p-6">
+            <Card className="p-6 bg-walle-darkgray border-walle-rust">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Watchlist</h2>
-                <button onClick={addToWatchlist} className="text-blue-400 hover:text-blue-300 text-sm">+ Add</button>
+                <h2 className="text-xl font-semibold text-walle-yellow">Watchlist</h2>
+                <button 
+                  onClick={addToWatchlist} 
+                  className="text-walle-yellow hover:text-walle-orange text-sm font-bold"
+                >
+                  + Add
+                </button>
               </div>
 
               <div className="space-y-3">
@@ -193,15 +294,19 @@ export default function MarketsPage() {
                   <div
                     key={item.symbol}
                     onClick={() => setSelectedSymbol(item.symbol)}
-                    className={`p-3 rounded cursor-pointer transition-colors ${selectedSymbol === item.symbol ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`}
+                    className={`p-3 rounded cursor-pointer transition-colors ${
+                      selectedSymbol === item.symbol 
+                        ? 'bg-walle-rust border border-walle-yellow' 
+                        : 'bg-walle-darkblue hover:bg-walle-brown'
+                    }`}
                   >
                     <div className="flex justify-between items-start">
                       <div>
-                        <div className="font-semibold">{item.symbol}</div>
-                        <div className="text-sm text-gray-400">Vol: {item.volume.toLocaleString()}</div>
+                        <div className="font-semibold text-walle-yellow">{item.symbol}</div>
+                        <div className="text-sm text-walle-beige">Vol: {item.volume.toLocaleString()}</div>
                       </div>
                       <div className="text-right">
-                        <div className="font-semibold">${item.price.toLocaleString()}</div>
+                        <div className="font-semibold text-white">${item.price.toLocaleString()}</div>
                         <div className={`text-sm ${item.change24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                           {item.change24h >= 0 ? '+' : ''}{item.change24h.toFixed(2)}%
                         </div>
@@ -215,32 +320,77 @@ export default function MarketsPage() {
 
           {/* Chart */}
           <div className="lg:col-span-3">
-            <Card className="p-6">
+            <Card className="p-6 bg-walle-darkgray border-walle-rust">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">{selectedSymbol}</h2>
-                <div className="flex space-x-2">
-                  <Button variant="ghost" size="sm">1H</Button>
-                  <Button variant="primary" size="sm">1D</Button>
-                  <Button variant="ghost" size="sm">1W</Button>
-                  <Button variant="ghost" size="sm">1M</Button>
+                <div className="flex items-center gap-4">
+                  <h2 className="text-2xl font-semibold text-walle-yellow">{selectedSymbol}</h2>
+                  {currentPrice > 0 && (
+                    <div className="text-xl font-bold text-white">${currentPrice.toLocaleString()}</div>
+                  )}
                 </div>
+                <div className="flex items-center gap-2">
+                  {/* Chart Type Selector */}
+                  <div className="flex gap-1 bg-walle-darkblue rounded p-1">
+                    <button
+                      onClick={() => setChartType("candlestick")}
+                      className={`px-3 py-1 rounded text-sm ${
+                        chartType === "candlestick" 
+                          ? 'bg-walle-yellow text-walle-brown font-bold' 
+                          : 'text-walle-beige hover:bg-walle-brown'
+                      }`}
+                    >
+                      📊 Candles
+                    </button>
+                    <button
+                      onClick={() => setChartType("line")}
+                      className={`px-3 py-1 rounded text-sm ${
+                        chartType === "line" 
+                          ? 'bg-walle-yellow text-walle-brown font-bold' 
+                          : 'text-walle-beige hover:bg-walle-brown'
+                      }`}
+                    >
+                      📈 Line
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Timeframe Selector */}
+              <div className="flex gap-2 mb-4">
+                {timeframes.map((tf) => (
+                  <button
+                    key={tf.value}
+                    onClick={() => setSelectedTimeframe(tf.value)}
+                    className={`px-3 py-1 rounded text-sm font-semibold transition-colors ${
+                      selectedTimeframe === tf.value
+                        ? 'bg-walle-yellow text-walle-brown'
+                        : 'bg-walle-darkblue text-walle-beige hover:bg-walle-brown'
+                    }`}
+                  >
+                    {tf.label}
+                  </button>
+                ))}
               </div>
 
               {/* Chart Container */}
-              <div ref={chartContainerRef} className="h-96 bg-gray-700 rounded">
+              <div ref={chartContainerRef} className="h-[500px] bg-walle-darkblue rounded border border-walle-rust">
                 {/* Chart will be rendered here */}
               </div>
 
-              {/* Chart Controls */}
-              <div className="mt-4 flex justify-between items-center">
-                <div className="flex space-x-4 text-sm text-gray-400">
+              {/* Chart Info */}
+              <div className="mt-4 flex justify-between items-center text-sm text-walle-beige">
+                <div className="flex gap-4">
                   <span>Last Update: {new Date().toLocaleTimeString()}</span>
-                  <span>Source: WebSocket</span>
+                  <span>Timeframe: {selectedTimeframe}</span>
+                  <span>Type: {chartType === "candlestick" ? "Candlestick" : "Line"}</span>
                 </div>
-                <div className="flex space-x-2">
-                  <Button variant="ghost" size="sm">Fullscreen</Button>
-                  <Button variant="ghost" size="sm">Export</Button>
-                </div>
+                <button 
+                  onClick={loadChartData}
+                  disabled={isLoadingChart}
+                  className="px-3 py-1 bg-walle-rust text-white rounded hover:bg-walle-orange disabled:opacity-50"
+                >
+                  {isLoadingChart ? '⏳ Loading...' : '🔄 Refresh'}
+                </button>
               </div>
             </Card>
           </div>
@@ -249,3 +399,4 @@ export default function MarketsPage() {
     </div>
   );
 }
+

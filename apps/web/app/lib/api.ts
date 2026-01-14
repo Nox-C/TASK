@@ -44,6 +44,8 @@ export const Api = {
   },
   strategies: {
     list: () => fetchJSON<Strategy[]>(`/strategies`),
+    create: (body: { name: string; description?: string; config?: any }) =>
+      fetchJSON<Strategy>(`/strategies`, { method: "POST", body: JSON.stringify(body) }),
   },
   pnl: {
     snapshots: (range?: string) =>
