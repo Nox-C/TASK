@@ -12,4 +12,8 @@ export class CreateStrategyDto {
   // JSON schema or parameters can be extended later
   @IsOptional()
   params?: any;
+
+  // Strategy configuration
+  @IsOptional()
+  config?: any;
 }
