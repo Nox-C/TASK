@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Card, Button, StatusPill, Skeleton } from "@task/ui";
 import { connectActivity } from "../lib/ws";
-import { createChart, ColorType, CandlestickSeries } from "lightweight-charts";
+import { createChart, ColorType, CandlestickSeries, LineSeries } from "lightweight-charts";
 
 interface PriceTick {
   symbol: string;
@@ -144,7 +144,7 @@ export default function MarketsPage() {
       });
 
       if (chartType === "candlestick") {
-        const candlestickSeries = chart.addCandlestickSeries({
+        const candlestickSeries = chart.addSeries(CandlestickSeries, {
           upColor: '#10b981', // green
           downColor: '#ef4444', // red
           borderUpColor: '#10b981',
@@ -156,7 +156,7 @@ export default function MarketsPage() {
         candlestickSeries.setData(ohlcvData);
         (chartContainerRef.current as any)._candlestickSeries = candlestickSeries;
       } else {
-        const lineSeries = chart.addLineSeries({
+        const lineSeries = chart.addSeries(LineSeries, {
           color: '#fbbf24', // WALL-E yellow
           lineWidth: 2,
         });
@@ -399,4 +399,3 @@ export default function MarketsPage() {
     </div>
   );
 }
-

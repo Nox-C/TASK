@@ -1,7 +1,11 @@
 import { Job } from 'pg-boss';
 
+interface StopBotJobData {
+  botId?: string;
+}
+
 export function registerStopBot(boss: any) {
-  boss.work('task.action.stop_bot', async (job: Job) => {
+  boss.work('task.action.stop_bot', async (job: Job<StopBotJobData>) => {
     const { botId } = job.data || {};
     console.log('[worker] stop_bot job received', { botId, data: job.data });
 

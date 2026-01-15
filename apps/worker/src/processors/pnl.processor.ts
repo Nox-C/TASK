@@ -1,8 +1,12 @@
 import fetch from 'node-fetch';
 import { Job } from 'pg-boss';
 
+interface PnlJobData {
+  accountId?: string;
+}
+
 export function registerPnlCompute(boss: any) {
-  boss.work('pnl.compute', async (job: Job) => {
+  boss.work('pnl.compute', async (job: Job<PnlJobData>) => {
     const { accountId } = job.data || {};
     try {
       const url = accountId ? `${process.env.API_BASE || 'http://localhost:3001'}/pnl/snapshots?accountId=${accountId}` : `${process.env.API_BASE || 'http://localhost:3001'}/pnl/snapshots`;

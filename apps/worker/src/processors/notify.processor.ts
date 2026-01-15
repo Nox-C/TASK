@@ -1,7 +1,12 @@
 import { Job } from 'pg-boss';
 
+interface NotifyJobData {
+  message?: string;
+  recipients?: string[];
+}
+
 export function registerNotify(boss: any) {
-  boss.work('task.action.notify', async (job: Job) => {
+  boss.work('task.action.notify', async (job: Job<NotifyJobData>) => {
     const { message, recipients } = job.data || {};
     console.log('[worker] notify job received', { message, recipients });
 

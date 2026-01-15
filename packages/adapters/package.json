@@ -2,10 +2,11 @@
   "name": "@task/adapters",
   "version": "0.0.0",
   "private": true,
-  "main": "src/interfaces/index.ts",
-  "types": "src/interfaces/index.ts",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
   "exports": {
-    ".": "./src/interfaces/index.ts",
+    ".": "./src/index.ts",
+    "./interfaces": "./src/interfaces/index.ts",
     "./paper": "./src/paper/execution.adapter.ts",
     "./replay": "./src/replay/market.adapter.ts"
   },
