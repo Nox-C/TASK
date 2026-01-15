@@ -1,11 +1,12 @@
-import { Logger } from '@nestjs/common';
+import { Logger } from "@nestjs/common";
 import {
   OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from "@nestjs/websockets";
-import { Server } from 'socket.io';
+import { Server } from "socket.io";
+import WebSocket from "ws";
 import { MarketEventsService } from "../market/events.service";
 
 @WebSocketGateway({
@@ -22,27 +23,297 @@ export class WsGateway implements OnGatewayInit {
 
   afterInit() {
     WsGateway.instance = this;
-    this.logger.log("WebSocket gateway initialized");
+    this.logger.log(
+      "WebSocket gateway initialized with real exchange connections"
+    );
 
-    // Subscribe to market events and broadcast to clients
-    this.marketEvents.onTick((tick) => {
-      const priceData = {
-        symbol: tick.symbol,
-        price: Number(tick.price),
-        timestamp: tick.ts ? new Date(tick.ts).getTime() : Date.now(),
-      };
-      
-      // Emit market price updates
-      this.server.emit("market.price", priceData);
-      
-      // Also emit as market_event for the frontend activity feed
-      this.server.emit("market_event", {
-        type: 'market',
-        message: `${tick.symbol}: $${Number(tick.price).toLocaleString()}`,
-        payload: priceData,
-        ts: priceData.timestamp
-      });
+    // Connect to real exchanges
+    this.connectToExchanges();
+  }
+
+  private connectToExchanges() {
+    // Connect to Binance WebSocket
+    this.connectBinance();
+
+    // Connect to Coinbase WebSocket
+    this.connectCoinbase();
+
+    // Connect to Crypto.com WebSocket
+    this.connectCryptoCom();
+  }
+
+  private connectBinance() {
+    const binanceWs = new WebSocket(
+      "wss://stream.binance.com:9443/ws/!ticker@arr"
+    );
+
+    binanceWs.on("open", () => {
+      this.logger.log("Connected to Binance WebSocket");
     });
+
+    binanceWs.on("message", (data) => {
+      try {
+        const tickers = JSON.parse(data.toString());
+        if (Array.isArray(tickers)) {
+          tickers.forEach((ticker) => {
+            if (ticker.s && ticker.c) {
+              const symbol = ticker.s.replace("USDT", "-USDT");
+              const priceData = {
+                symbol,
+                price: parseFloat(ticker.c),
+                timestamp: Date.now(),
+                volume: parseFloat(ticker.v || "0"),
+                change: parseFloat(ticker.P || "0"),
+                high24h: parseFloat(ticker.h || "0"),
+                low24h: parseFloat(ticker.l || "0"),
+              };
+
+              this.server.emit("market_price", priceData);
+              this.server.emit("market_event", {
+                type: "market",
+                message: `${symbol}: $${priceData.price.toLocaleString()}`,
+                payload: priceData,
+                ts: priceData.timestamp,
+              });
+
+              this.server.emit("chart_data", {
+                symbol,
+                data: {
+                  time: priceData.timestamp,
+                  open: priceData.price,
+                  high: priceData.high24h,
+                  low: priceData.low24h,
+                  close: priceData.price,
+                  volume: priceData.volume,
+                },
+              });
+            }
+          });
+        }
+      } catch (error) {
+        this.logger.error("Binance WebSocket error:", error);
+      }
+    });
+
+    binanceWs.on("error", (error) => {
+      this.logger.error("Binance WebSocket connection error:", error);
+      setTimeout(() => this.connectBinance(), 5000);
+    });
+
+    binanceWs.on("close", () => {
+      this.logger.log("Binance WebSocket closed, reconnecting...");
+      setTimeout(() => this.connectBinance(), 5000);
+    });
+  }
+
+  private connectCoinbase() {
+    const coinbaseWs = new WebSocket("wss://ws-feed.exchange.coinbase.com");
+
+    coinbaseWs.on("open", () => {
+      this.logger.log("Connected to Coinbase WebSocket");
+
+      const subscribe = {
+        type: "subscribe",
+        product_ids: [
+          "BTC-USD",
+          "ETH-USD",
+          "BNB-USD",
+          "SOL-USD",
+          "ADA-USD",
+          "XRP-USD",
+          "DOT-USD",
+          "DOGE-USD",
+          "AVAX-USD",
+          "MATIC-USD",
+          "LINK-USD",
+          "UNI-USD",
+          "LTC-USD",
+          "BCH-USD",
+          "ATOM-USD",
+          "SHIB-USD",
+          "PEPE-USD",
+          "ARB-USD",
+          "OP-USD",
+          "AAVE-USD",
+          "MKR-USD",
+          "COMP-USD",
+          "YFI-USD",
+          "SNX-USD",
+          "CRV-USD",
+        ],
+        channels: ["ticker"],
+      };
+      coinbaseWs.send(JSON.stringify(subscribe));
+    });
+
+    coinbaseWs.on("message", (data) => {
+      try {
+        const message = JSON.parse(data.toString());
+        if (message.type === "ticker" && message.product_id) {
+          const symbol = message.product_id;
+          const priceData = {
+            symbol,
+            price: parseFloat(message.price || "0"),
+            timestamp: Date.now(),
+            volume: parseFloat(message.volume_24h || "0"),
+            change: parseFloat(message.change_24h || "0"),
+            high24h: parseFloat(message.high_24h || "0"),
+            low24h: parseFloat(message.low_24h || "0"),
+          };
+
+          this.server.emit("market_price", priceData);
+          this.server.emit("market_event", {
+            type: "market",
+            message: `${symbol}: $${priceData.price.toLocaleString()}`,
+            payload: priceData,
+            ts: priceData.timestamp,
+          });
+
+          this.server.emit("chart_data", {
+            symbol,
+            data: {
+              time: priceData.timestamp,
+              open: priceData.price,
+              high: priceData.high24h,
+              low: priceData.low24h,
+              close: priceData.price,
+              volume: priceData.volume,
+            },
+          });
+        }
+      } catch (error) {
+        this.logger.error("Coinbase WebSocket error:", error);
+      }
+    });
+
+    coinbaseWs.on("error", (error) => {
+      this.logger.error("Coinbase WebSocket connection error:", error);
+      setTimeout(() => this.connectCoinbase(), 5000);
+    });
+
+    coinbaseWs.on("close", () => {
+      this.logger.log("Coinbase WebSocket closed, reconnecting...");
+      setTimeout(() => this.connectCoinbase(), 5000);
+    });
+  }
+
+  private connectCryptoCom() {
+    const cryptoComWs = new WebSocket("wss://stream.crypto.com/v2/market");
+
+    cryptoComWs.on("open", () => {
+      this.logger.log("Connected to Crypto.com WebSocket");
+
+      const subscribe = {
+        method: "subscribe",
+        params: {
+          channels: ["ticker"],
+          instruments: [
+            "BTCUSDT",
+            "ETHUSDT",
+            "BNBUSDT",
+            "SOLUSDT",
+            "ADAUSDT",
+            "XRPUSDT",
+            "DOTUSDT",
+            "DOGEUSDT",
+            "AVAXUSDT",
+            "MATICUSDT",
+            "LINKUSDT",
+            "UNIUSDT",
+            "LTCUSDT",
+            "BCHUSDT",
+            "ATOMUSDT",
+            "SHIBUSDT",
+            "PEPEUSDT",
+            "ARBUSDT",
+            "OPUSDT",
+            "AAVEUSDT",
+            "MKRUSDT",
+            "COMPUSDT",
+            "YFIUSDT",
+            "SNXUSDT",
+            "CRVUSDT",
+          ],
+        },
+      };
+      cryptoComWs.send(JSON.stringify(subscribe));
+    });
+
+    cryptoComWs.on("message", (data) => {
+      try {
+        const message = JSON.parse(data.toString());
+        if (
+          message.method === "ticker" &&
+          message.result &&
+          message.result.data
+        ) {
+          const ticker = message.result.data;
+          const symbol = ticker.i.replace("USDT", "-USDT");
+          const priceData = {
+            symbol,
+            price: parseFloat(ticker.a || "0"),
+            timestamp: Date.now(),
+            volume: parseFloat(ticker.v || "0"),
+            change: parseFloat(ticker.c || "0"),
+            high24h: parseFloat(ticker.h || "0"),
+            low24h: parseFloat(ticker.l || "0"),
+          };
+
+          this.server.emit("market_price", priceData);
+          this.server.emit("market_event", {
+            type: "market",
+            message: `${symbol}: $${priceData.price.toLocaleString()}`,
+            payload: priceData,
+            ts: priceData.timestamp,
+          });
+
+          this.server.emit("chart_data", {
+            symbol,
+            data: {
+              time: priceData.timestamp,
+              open: priceData.price,
+              high: priceData.high24h,
+              low: priceData.low24h,
+              close: priceData.price,
+              volume: priceData.volume,
+            },
+          });
+        }
+      } catch (error) {
+        this.logger.error("Crypto.com WebSocket error:", error);
+      }
+    });
+
+    cryptoComWs.on("error", (error) => {
+      this.logger.error("Crypto.com WebSocket connection error:", error);
+      setTimeout(() => this.connectCryptoCom(), 5000);
+    });
+
+    cryptoComWs.on("close", () => {
+      this.logger.log("Crypto.com WebSocket closed, reconnecting...");
+      setTimeout(() => this.connectCryptoCom(), 5000);
+    });
+  }
+
+  private getBasePrice(symbol: string): number {
+    const basePrices: { [key: string]: number } = {
+      "BTC-USDT": 45000,
+      "ETH-USDT": 2500,
+      "BNB-USDT": 320,
+      "SOL-USDT": 105,
+      "ADA-USDT": 0.65,
+      "XRP-USDT": 0.55,
+      "DOT-USDT": 7.8,
+      "DOGE-USDT": 0.085,
+      "AVAX-USDT": 38,
+      "MATIC-USDT": 0.92,
+      "LINK-USDT": 14.5,
+      "UNI-USDT": 6.2,
+      "LTC-USDT": 72,
+      "BCH-USDT": 235,
+      "ATOM-USDT": 9.8,
+    };
+    return basePrices[symbol] || 100;
   }
 
   @SubscribeMessage("ping")

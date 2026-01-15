@@ -28,7 +28,10 @@ export default function TasksPage() {
         setTaskRuns([]); // TODO: Implement task runs API
         setLoading(false);
       } catch (error) {
-        console.error("Failed to fetch tasks:", error);
+        // Log error for debugging in development
+        if (process.env.NODE_ENV === "development") {
+          console.error("Failed to fetch tasks:", error);
+        }
         setLoading(false);
       }
     };
@@ -76,7 +79,10 @@ export default function TasksPage() {
       });
       setShowCreateForm(false);
     } catch (error) {
-      console.error("Failed to create task:", error);
+      // Log error for debugging in development
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to create task:", error);
+      }
     }
   };
 

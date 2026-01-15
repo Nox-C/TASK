@@ -12,7 +12,6 @@ export async function GET() {
     const cookieStore = await cookies();
     const token = cookieStore.get("auth_token");
 
-    // In a real app, you would validate the token and fetch user data
     if (!token) {
       return NextResponse.json(
         { message: "Not authenticated" },
@@ -20,16 +19,35 @@ export async function GET() {
       );
     }
 
-    // Mock user data for demonstration
-    const mockUser: User = {
-      id: "123",
-      email: "user@example.com",
-      name: "Demo User",
-    };
+    // In production, validate the JWT token with your authentication service
+    // const response = await fetch(`${process.env.API_URL}/auth/validate`, {
+    //   method: 'POST',
+    //   headers: {
+    //     'Authorization': `Bearer ${token.value}`,
+    //     'Content-Type': 'application/json'
+    //   }
+    // });
 
-    return NextResponse.json(mockUser);
+    // if (!response.ok) {
+    //   return NextResponse.json(
+    //     { message: "Invalid token" },
+    //     { status: 401 }
+    //   );
+    // }
+
+    // const user = await response.json();
+    // return NextResponse.json(user);
+
+    // For now, return error to indicate production auth needed
+    return NextResponse.json(
+      { message: "Production authentication not configured" },
+      { status: 501 }
+    );
   } catch (error) {
-    console.error("Session error:", error);
+    // Log error for debugging in development
+    if (process.env.NODE_ENV === "development") {
+      console.error("Session error:", error);
+    }
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

@@ -1,8 +1,38 @@
 
+
 > web@0.0.0 build /home/nox/TASK/apps/web
 > next build
 
 [1m[38;2;173;127;168m▲ Next.js 16.1.1[39m[22m (Turbopack)
+- Environments: .env.local, .env.production
+- Experiments (use with caution):
+  [1m✓[22m externalDir
 
 [37m[1m [22m[39m Creating an optimized production build ...
-[41m[30m ELIFECYCLE [39m[49m [31mCommand failed.[39m
+[32m[1m✓[22m[39m Compiled successfully in 5.0s
+[37m[1m [22m[39m Skipping validation of types
+[?25l[37m[1m [22m[39m Collecting page data using 7 workers  [36m.[39m[2K[1G[37m[1m [22m[39m Collecting page data using 7 workers  [36m..[39m[2K[1G[37m[1m [22m[39m Collecting page data using 7 workers  [36m...[39m[2K[1G[37m[1m [22m[39m Collecting page data using 7 workers  [36m.[39m[2K[1G[?25h[37m[1m [22m[39m Collecting page data using 7 workers in 760.8ms    [32m[1m✓[22m[39m Collecting page data using 7 workers in 760.8ms 
+[?25l[37m[1m [22m[39m Generating static pages using 7 workers (0/15)  [36m[    ][39m[2K[1G[37m[1m [22m[39m Generating static pages using 7 workers (4/15)  [36m[=   ][39m[2K[1G[37m[1m [22m[39m Generating static pages using 7 workers (8/15)  [36m[==  ][39m[2K[1G[?25h[32m[1m✓[22m[39m Generating static pages using 7 workers (15/15) in 453.3ms
+[?25l[37m[1m [22m[39m Finalizing page optimization  [36m.[39m[2K[1G[?25h[37m[1m [22m[39m Finalizing page optimization in 16.2ms    [32m[1m✓[22m[39m Finalizing page optimization in 16.2ms 
+
+[4mRoute (app)[24m
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/me
+├ ƒ /api/wallet/transaction
+├ ○ /auth/login
+├ ○ /auth/register
+├ ○ /bots
+├ ○ /connections
+├ ○ /dashboard
+├ ○ /markets
+├ ○ /portfolio
+└ ○ /tasks
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+[?25h

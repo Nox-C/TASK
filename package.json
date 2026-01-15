@@ -17,8 +17,8 @@
     "format": "prettier --write ."
   },
   "devDependencies": {
-    "@types/node": "^20.19.27",
-    "turbo": "^2.7.3",
+    "@types/node": "^20.19.29",
+    "turbo": "^2.7.4",
     "typescript": "^5.9.3"
   },
   "dependencies": {

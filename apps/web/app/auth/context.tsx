@@ -30,7 +30,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(userData);
         }
       } catch (error) {
-        console.error('Auth check failed:', error);
+        // Log error for debugging in development
+        if (process.env.NODE_ENV === "development") {
+          console.error("Auth check failed:", error);
+        }
       } finally {
         setIsLoading(false);
       }

@@ -40,9 +40,9 @@ export class OrdersService {
       data: {
         orderId: order.id,
         qty: dto.qty,
-        price: dto.price ?? (await this.mockMarketPrice(dto.symbol)),
+        price: dto.price ?? (await this.getRealMarketPrice(dto.symbol)),
         executedQty: dto.qty,
-        executedPrice: dto.price ?? (await this.mockMarketPrice(dto.symbol)),
+        executedPrice: dto.price ?? (await this.getRealMarketPrice(dto.symbol)),
       },
     });
 
@@ -101,9 +101,30 @@ export class OrdersService {
     return this.prisma.order.findMany({ where, include: { fills: true } });
   }
 
-  private async mockMarketPrice(symbol: string) {
-    // simplistic: return random price for demo
-    return Math.round((Math.random() * 10000 + 100) * 100) / 100;
+  private async getRealMarketPrice(symbol: string): Promise<number> {
+    // Get real price from Binance
+    try {
+      const response = await fetch(
+        `https://api.binance.com/api/v3/ticker/price?symbol=${symbol.replace(
+          "-",
+          ""
+        )}`
+      );
+      const data: any = await response.json();
+      return parseFloat(data.price);
+    } catch (error) {
+      // Fallback to Coinbase if Binance fails
+      try {
+        const coinbaseSymbol = symbol.replace("USDT", "-USD");
+        const response = await fetch(
+          `https://api.pro.coinbase.com/products/${coinbaseSymbol}/ticker`
+        );
+        const data: any = await response.json();
+        return parseFloat(data.price);
+      } catch (coinbaseError) {
+        return 0; // Final fallback
+      }
+    }
   }
 
   private async applyFillToAccount(

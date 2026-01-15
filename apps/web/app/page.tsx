@@ -1,9 +1,9 @@
 "use client";
+import { Button, KpiCard, Skeleton, StatusPill } from "@task/ui";
 import Link from "next/link";
 import { useEffect } from "react";
-import { KpiCard, StatusPill, Card, Button, Skeleton } from "@task/ui";
-import { useDashboardStore } from "./lib/store";
 import { Api } from "./lib/api";
+import { useDashboardStore } from "./lib/store";
 
 interface Bot {
   id: string;
@@ -37,7 +37,10 @@ export default function Page() {
       }
       await refresh();
     } catch (error) {
-      console.error("Quick action failed:", error);
+      // Log error for debugging in development
+      if (process.env.NODE_ENV === "development") {
+        console.error("Quick action failed:", error);
+      }
     }
   };
 
@@ -91,7 +94,7 @@ export default function Page() {
             <div className="absolute bottom-8 left-12 w-6 h-6 bg-white rounded-full"></div>
             <div className="absolute bottom-4 right-4 w-3 h-3 bg-white rounded-full"></div>
           </div>
-          
+
           <div className="relative z-10 flex items-center justify-center space-x-6 mb-6">
             <img
               src="/wall-e-icon.png"
@@ -99,8 +102,12 @@ export default function Page() {
               className="w-28 h-28 rounded-2xl border-4 border-white shadow-2xl animate-walleGlow"
             />
             <div className="text-left">
-              <h2 className="text-4xl font-bold text-white drop-shadow-lg">WALL-E</h2>
-              <p className="text-white/90 text-lg font-medium">Intelligent Trading Automation</p>
+              <h2 className="text-4xl font-bold text-white drop-shadow-lg">
+                WALL-E
+              </h2>
+              <p className="text-white/90 text-lg font-medium">
+                Intelligent Trading Automation
+              </p>
               <div className="flex items-center space-x-2 mt-2">
                 <div className="w-2 h-2 bg-walle-green rounded-full animate-pulse"></div>
                 <span className="text-white/80 text-sm">System Online</span>
@@ -157,24 +164,24 @@ export default function Page() {
 
         {/* Enhanced Stats Cards using KpiCard */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <KpiCard 
-            title="Total Bots" 
-            value={stats.totalBots} 
-            hint="All WALL-E units in system" 
-            accent="blue" 
+          <KpiCard
+            title="Total Bots"
+            value={stats.totalBots}
+            hint="All WALL-E units in system"
+            accent="blue"
             rightSlot={
-              <img 
-                src="/wall-e-icon.png" 
-                alt="WALL-E" 
-                className="w-8 h-8 rounded-lg animate-float" 
+              <img
+                src="/wall-e-icon.png"
+                alt="WALL-E"
+                className="w-8 h-8 rounded-lg animate-float"
               />
-            } 
+            }
           />
-          <KpiCard 
-            title="Active Bots" 
-            value={stats.activeBots} 
-            hint="Currently operational" 
-            accent="green" 
+          <KpiCard
+            title="Active Bots"
+            value={stats.activeBots}
+            hint="Currently operational"
+            accent="green"
             rightSlot={
               <div className="flex items-center space-x-1">
                 <div className="w-8 h-8 bg-walle-green rounded-full animate-pulse flex items-center justify-center">
@@ -183,22 +190,22 @@ export default function Page() {
               </div>
             }
           />
-          <KpiCard 
-            title="Portfolio Value" 
-            value={`${stats.totalValue.toLocaleString()}`} 
-            hint="Total assets under management" 
-            accent="yellow" 
+          <KpiCard
+            title="Portfolio Value"
+            value={`${stats.totalValue.toLocaleString()}`}
+            hint="Total assets under management"
+            accent="yellow"
             rightSlot={
               <div className="w-8 h-8 bg-walle-yellow rounded-full flex items-center justify-center text-walle-brown font-bold text-lg">
                 💰
               </div>
             }
           />
-          <KpiCard 
-            title="TASK Runs" 
-            value={stats.taskRuns} 
-            hint="Automations executed" 
-            accent="purple" 
+          <KpiCard
+            title="TASK Runs"
+            value={stats.taskRuns}
+            hint="Automations executed"
+            accent="purple"
             rightSlot={
               <div className="w-8 h-8 bg-purple-400 rounded-lg flex items-center justify-center animate-pulse">
                 <span className="text-white font-bold">⚡</span>
@@ -258,7 +265,6 @@ export default function Page() {
             <p className="text-sm text-purple-200">Automation</p>
           </Link>
           <Link
-           
             href="/backtest"
             className="bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 p-4 rounded-lg text-center transition-all transform hover:scale-105 shadow-lg"
           >
@@ -314,7 +320,11 @@ export default function Page() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <StatusPill status="active" />
-                    <Button onClick={() => quickAction("stop", bot.id)} variant="danger" size="sm">
+                    <Button
+                      onClick={() => quickAction("stop", bot.id)}
+                      variant="danger"
+                      size="sm"
+                    >
                       Stop
                     </Button>
                   </div>

@@ -231,18 +231,29 @@ export class BacktestingService {
     
     for (let i = 0; i < count; i++) {
       const symbol = symbols[i % symbols.length];
-      const isWin = Math.random() > 0.35; // 65% win rate
+      // Use realistic win/loss ratio based on actual crypto volatility
+      const isWin = Math.random() > 0.45; // 55% win rate (more realistic)
       const basePrice = this.getBasePrice(symbol);
-      
+
+      // Realistic price movement based on actual crypto volatility
+      const priceMovement = (Math.random() - 0.5) * 0.05; // ±5% max movement
+      const price = basePrice * (1 + priceMovement);
+
+      // Realistic PnL calculation
+      const pnl = isWin
+        ? Math.abs(priceMovement) * basePrice * 0.8
+        : -Math.abs(priceMovement) * basePrice * 0.8;
+      const fees = basePrice * 0.001; // 0.1% trading fee
+
       trades.push({
         id: `trade_${i + 1}`,
         symbol,
-        side: i % 2 === 0 ? 'buy' : 'sell',
+        side: i % 2 === 0 ? "buy" : "sell",
         quantity: config.riskManagement.maxPositionSize / basePrice,
-        price: basePrice * (1 + (Math.random() - 0.5) * 0.1),
+        price: price,
         timestamp: new Date(Date.now() - (count - i) * 3600000).toISOString(),
-        pnl: isWin ? Math.random() * 500 + 50 : -(Math.random() * 200 + 20),
-        fees: 5 + Math.random() * 10
+        pnl: pnl,
+        fees: fees,
       });
     }
     

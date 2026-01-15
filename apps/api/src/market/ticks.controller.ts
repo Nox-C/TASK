@@ -41,15 +41,13 @@ export class TicksController {
     const results = [];
 
     for (const symbol of symbols) {
-      const basePrice =
-        symbol === "BTC-USD" ? 45000 : symbol === "ETH-USD" ? 3200 : 120;
-      const variation = (Math.random() - 0.5) * basePrice * 0.02; // ±1% variation
-      const price = basePrice + variation;
+      // Get real price from exchanges instead of fake data
+      const realPrice = await this.getRealExchangePrice(symbol);
 
       const tick = await this.market.ingestTick({
         symbol,
-        price: price.toFixed(2),
-        source: "test-generator",
+        price: realPrice.toFixed(2),
+        source: "live-exchange",
         ts: new Date(),
       });
 
@@ -61,5 +59,40 @@ export class TicksController {
       count: results.length,
       data: results,
     };
+  }
+
+  private async getRealExchangePrice(symbol: string): Promise<number> {
+    return new Promise((resolve, reject) => {
+      const ws = new WebSocket('wss://stream.binance.com:9443/ws/' + symbol.toLowerCase().replace('-', '') + '@ticker');
+      
+      const timeout = setTimeout(() => {
+        ws.close();
+        resolve(0); // Fallback price
+      }, 5000);
+
+      ws.onmessage = (data) => {
+        try {
+          const ticker = JSON.parse(data.toString());
+          if (ticker.c) {
+            clearTimeout(timeout);
+            ws.close();
+            resolve(parseFloat(ticker.c));
+          }
+        } catch (error) {
+          clearTimeout(timeout);
+          ws.close();
+          resolve(0);
+        }
+      };
+
+      ws.onerror = () => {
+        clearTimeout(timeout);
+        resolve(0); // Fallback price
+      };
+
+      ws.onclose = () => {
+        clearTimeout(timeout);
+      };
+    });
   }
 }

@@ -1,5 +1,6 @@
 "use client";
 import { Button, Card, Skeleton, StatusPill } from "@task/ui";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Api } from "../lib/api";
 import { connectActivity } from "../lib/ws";
@@ -153,70 +154,34 @@ const UnifiedChart = ({
 
     if (data.length === 0) return;
 
-    // Group data by symbol
-    const symbols = [...new Set(data.map((d) => d.symbol))];
-    const colors = [
-      "#fbbf24",
-      "#10b981",
-      "#3b82f6",
-      "#ef4444",
-      "#8b5cf6",
-      "#f97316",
-      "#06b6d4",
-      "#84cc16",
-    ];
+    // Draw performance line
+    ctx.strokeStyle = "#fbbf24";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
 
-    // Draw title
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 16px sans-serif";
-    ctx.fillText(`📊 Live Crypto Prices (${symbols.length} symbols)`, 20, 25);
+    const maxValue = Math.max(...data.map((d) => d.value));
+    const minValue = Math.min(...data.map((d) => d.value));
+    const range = maxValue - minValue;
 
-    // Draw each symbol's price line
-    symbols.forEach((symbol, symbolIndex) => {
-      const symbolData = data.filter((d) => d.symbol === symbol);
-      if (symbolData.length === 0) return;
+    data.forEach((point, index) => {
+      const x = (index / (data.length - 1)) * (width - 40) + 20;
+      const y =
+        height - 40 - ((point.value - minValue) / range) * (height - 80);
 
-      const color = colors[symbolIndex % colors.length];
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-
-      const maxValue = Math.max(...symbolData.map((d) => d.price));
-      const minValue = Math.min(...symbolData.map((d) => d.price));
-      const range = maxValue - minValue || 1;
-
-      symbolData.forEach((point, index) => {
-        const x = (index / (symbolData.length - 1)) * (width - 80) + 40;
-        const y =
-          height - 60 - ((point.price - minValue) / range) * (height - 120);
-
-        if (index === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
-      });
-
-      ctx.stroke();
-
-      // Draw symbol label and current price
-      const latestPoint = symbolData[symbolData.length - 1];
-      const exchange = latestPoint?.exchange || "Unknown";
-      ctx.fillStyle = color;
-      ctx.font = "12px sans-serif";
-      ctx.fillText(
-        `${symbol}: $${
-          latestPoint?.price?.toFixed(4) || "0.0000"
-        } (${exchange})`,
-        width - 200,
-        35 + symbolIndex * 20
-      );
+      if (index === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
     });
 
-    // Draw legend
+    ctx.stroke();
+
+    // Draw current value
     ctx.fillStyle = "#ffffff";
-    ctx.font = "11px sans-serif";
-    ctx.fillText("🟡 Binance/Crypto.com | 🟢 Coinbase", 20, height - 20);
+    ctx.font = "16px sans-serif";
+    const latestValue = data[data.length - 1]?.value || 0;
+    ctx.fillText(`Current: $${latestValue.toFixed(2)}`, 20, 30);
   };
 
   return (
@@ -311,7 +276,7 @@ export default function BotsPage() {
 
         // Fetch manual bots
         try {
-          const manualBotsResponse = await fetch("/api/bots/manual");
+          const manualBotsResponse = await fetch("/manual-bots");
           const manualBotsData = await manualBotsResponse.json();
           setManualBots(manualBotsData.bots || []);
         } catch (error) {
@@ -330,45 +295,98 @@ export default function BotsPage() {
     };
 
     fetchData();
+  }, []);
 
-    // WebSocket connection for live updates
+  // WebSocket connection for real-time bot activity
+  useEffect(() => {
     const disconnect = connectActivity({
       onEvent: (data) => {
-        if (data.type === "bot" && data.payload?.botId) {
+        // Track bot activity
+        if ((data as any).type === "bot" && (data as any).payload) {
+          const payload = (data as any).payload;
           setLiveActivity((prev) => ({
             ...prev,
-            [data.payload.botId]: data.payload,
+            [payload.botId]: {
+              ...payload,
+              timestamp: Date.now(),
+            },
           }));
-          setIsConnected(true);
-        } else if (data.type === "chart" && data.payload) {
-          // Update chart data with live exchange data
-          setPerformanceData((prev) => {
-            const newData = {
-              time: data.payload.data.time,
-              price: data.payload.data.close,
-              volume: data.payload.data.volume,
-              symbol: data.payload.symbol,
-              exchange: data.payload.symbol.includes("USD")
-                ? "Coinbase"
-                : data.payload.symbol.includes("USDT")
-                ? "Binance/Crypto.com"
-                : "Unknown",
-            };
-
-            // Group by symbol and keep last 50 points per symbol
-            const symbolData = prev
-              .filter((d) => d.symbol === data.payload.symbol)
-              .slice(-49);
-            return [...symbolData, newData];
-          });
         }
       },
+      onStatusChange: (s) => setIsConnected(s === "connected"),
     });
-
-    return () => {
-      disconnect?.();
-    };
+    return () => disconnect();
   }, []);
+
+  const handleCreateBot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const created: any = await Api.bots.create(newBot);
+      setBots([...bots, created]);
+      setNewBot({ name: "", strategyId: "" });
+      setShowCreateForm(false);
+    } catch (error) {
+      // Log error for debugging in development
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to create bot:", error);
+      }
+    }
+  };
+
+  const toggleBot = async (
+    botId: string,
+    currentStatus: boolean,
+    isManual = false
+  ) => {
+    try {
+      if (isManual) {
+        // Toggle manual bot
+        const endpoint = currentStatus
+          ? `/manual-bots/${botId}/deactivate`
+          : `/manual-bots/${botId}/activate`;
+        const response = await fetch(endpoint, { method: "POST" });
+        if (response.ok) {
+          setManualBots(
+            manualBots.map((bot) =>
+              bot.id === botId ? { ...bot, isActive: !currentStatus } : bot
+            )
+          );
+        }
+      } else {
+        // Toggle regular bot
+        if (currentStatus) await Api.bots.stop(botId);
+        else await Api.bots.start(botId);
+        setBots(
+          bots.map((bot) =>
+            bot.id === botId ? { ...bot, active: !currentStatus } : bot
+          )
+        );
+      }
+    } catch (error) {
+      // Log error for debugging in development
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to toggle bot:", error);
+      }
+    }
+  };
+
+  const deleteManualBot = async (botId: string) => {
+    try {
+      const response = await fetch(`/manual-bots/${botId}`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        setManualBots(manualBots.filter((bot) => bot.id !== botId));
+      }
+    } catch (error) {
+      console.error("Failed to delete manual bot:", error);
+    }
+  };
+
+  const configureManualBot = (botId: string) => {
+    // Navigate to manual bot configuration page
+    window.location.href = `/bots/manual/edit/${botId}`;
+  };
 
   // Unified Bot Management Functions
   const handleBotSelect = (bot: any, isManual = false) => {
@@ -492,65 +510,6 @@ export default function BotsPage() {
     setPerformanceData(generatePerformanceData());
   }, [selectedBot]);
 
-  // Bot management functions
-  const toggleBot = async (id: string, active: boolean) => {
-    try {
-      if (active) {
-        await Api.bots.stop(id);
-      } else {
-        await Api.bots.start(id);
-      }
-      setBots((prev) =>
-        prev.map((bot) => (bot.id === id ? { ...bot, active: !active } : bot))
-      );
-    } catch (error) {
-      console.error("Failed to toggle bot:", error);
-    }
-  };
-
-  const toggleManualBot = async (id: string) => {
-    try {
-      const bot = manualBots.find((b) => b.id === id);
-      if (bot) {
-        const response = await fetch(`/api/bots/manual/${id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ isActive: !bot.isActive }),
-        });
-
-        if (response.ok) {
-          setManualBots((prev) =>
-            prev.map((b) => (b.id === id ? { ...b, isActive: !b.isActive } : b))
-          );
-        }
-      }
-    } catch (error) {
-      console.error("Failed to toggle manual bot:", error);
-    }
-  };
-
-  const deleteManualBot = async (id: string) => {
-    try {
-      await fetch(`/api/bots/manual/${id}`, { method: "DELETE" });
-      setManualBots((prev) => prev.filter((bot) => bot.id !== id));
-    } catch (error) {
-      console.error("Failed to delete manual bot:", error);
-    }
-  };
-
-  const handleCreateBot = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await Api.bots.create({ ...newBot });
-      setNewBot({ name: "", strategyId: "" });
-      setShowCreateForm(false);
-      const botsData = await Api.bots.list();
-      setBots(botsData);
-    } catch (error) {
-      console.error("Failed to create bot:", error);
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-walle-darkblue text-white p-6">
@@ -647,78 +606,53 @@ export default function BotsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Bot List & Selection */}
           <div className="lg:col-span-1 space-y-4">
-            <h2 className="text-xl font-semibold text-walle-yellow mb-4">
-              🤖 Your Bots
-            </h2>
+            <h2 className="text-xl font-semibold text-walle-yellow mb-4">🤖 Your Bots</h2>
             <div className="space-y-3 max-h-96 overflow-y-auto">
               {totalBots === 0 ? (
                 <Card className="p-4 bg-walle-darkgray border-walle-rust">
-                  <p className="text-walle-beige text-center">
-                    No bots created yet
-                  </p>
+                  <p className="text-walle-beige text-center">No bots created yet</p>
                 </Card>
               ) : (
                 <>
                   {bots.map((bot) => {
                     const activity = liveActivity[bot.id];
-                    const hasRecentActivity =
-                      activity && Date.now() - activity.timestamp < 5000;
-
+                    const hasRecentActivity = activity && Date.now() - activity.timestamp < 5000;
+                    
                     return (
-                      <Card
+                      <Card 
                         key={bot.id}
                         onClick={() => handleBotSelect(bot, false)}
                         className={`p-4 bg-walle-darkgray border-2 cursor-pointer transition-all hover:border-walle-yellow ${
-                          selectedBot?.id === bot.id
-                            ? "border-walle-yellow"
-                            : "border-walle-rust"
+                          selectedBot?.id === bot.id ? 'border-walle-yellow' : 'border-walle-rust'
                         }`}
                       >
                         <div className="flex justify-between items-start">
                           <div>
-                            <h3 className="font-semibold text-walle-yellow">
-                              {bot.name}
-                            </h3>
-                            <p className="text-sm text-walle-beige">
-                              Template Bot
-                            </p>
+                            <h3 className="font-semibold text-walle-yellow">{bot.name}</h3>
+                            <p className="text-sm text-walle-beige">Template Bot</p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <div
-                              className={`w-2 h-2 rounded-full ${
-                                bot.active ? "bg-green-400" : "bg-gray-400"
-                              }`}
-                            ></div>
-                            {hasRecentActivity && (
-                              <div className="w-2 h-2 rounded-full bg-walle-orange animate-pulse"></div>
-                            )}
+                            <div className={`w-2 h-2 rounded-full ${bot.active ? 'bg-green-400' : 'bg-gray-400'}`}></div>
+                            {hasRecentActivity && <div className="w-2 h-2 rounded-full bg-walle-orange animate-pulse"></div>}
                           </div>
                         </div>
                       </Card>
                     );
                   })}
                   {manualBots.map((bot) => (
-                    <Card
+                    <Card 
                       key={bot.id}
                       onClick={() => handleBotSelect(bot, true)}
                       className={`p-4 bg-walle-darkgray border-2 cursor-pointer transition-all hover:border-walle-yellow ${
-                        selectedBot?.id === bot.id
-                          ? "border-walle-yellow"
-                          : "border-walle-rust"
+                        selectedBot?.id === bot.id ? 'border-walle-yellow' : 'border-walle-rust'
                       }`}
                     >
                       <div className="flex justify-between items-start">
                         <div>
-                          <h3 className="font-semibold text-walle-yellow">
-                            {bot.name}
-                          </h3>
+                          <h3 className="font-semibold text-walle-yellow">{bot.name}</h3>
                           <p className="text-sm text-walle-beige">Manual Bot</p>
                         </div>
-                        <div
-                          className={`w-2 h-2 rounded-full ${
-                            bot.isActive ? "bg-green-400" : "bg-gray-400"
-                          }`}
-                        ></div>
+                        <div className={`w-2 h-2 rounded-full ${bot.isActive ? 'bg-green-400' : 'bg-gray-400'}`}></div>
                       </div>
                     </Card>
                   ))}
@@ -730,9 +664,9 @@ export default function BotsPage() {
           {/* Unified Chart & Controls */}
           <div className="lg:col-span-2 space-y-6">
             {/* Unified Chart */}
-            <UnifiedChart
+            <UnifiedChart 
               botConfig={botConfig}
-              mode={selectedBot ? "live" : "building"}
+              mode={selectedBot ? 'live' : 'building'}
               performanceData={performanceData}
               backtestResult={botConfig.backtestResult}
             />
@@ -740,37 +674,27 @@ export default function BotsPage() {
             {/* Bot Configuration Controls */}
             <Card className="p-6 bg-walle-darkgray border-walle-rust">
               <h3 className="text-lg font-semibold text-walle-yellow mb-4">
-                {selectedBot
-                  ? `🔧 Editing: ${selectedBot.name}`
-                  : "🚀 Create New Bot"}
+                {selectedBot ? `🔧 Editing: ${selectedBot.name}` : '🚀 Create New Bot'}
               </h3>
-
+              
               <div className="space-y-4">
                 {/* Basic Info */}
                 <div>
-                  <label className="block text-sm font-medium text-walle-beige mb-2">
-                    Bot Name
-                  </label>
+                  <label className="block text-sm font-medium text-walle-beige mb-2">Bot Name</label>
                   <input
                     type="text"
                     value={botConfig.name}
-                    onChange={(e) =>
-                      updateBotParameter("", "name", e.target.value)
-                    }
+                    onChange={(e) => updateBotParameter('', 'name', e.target.value)}
                     className="w-full px-3 py-2 bg-walle-darkblue border border-walle-rust rounded text-white"
                     placeholder="Enter bot name"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-walle-beige mb-2">
-                    Symbol
-                  </label>
+                  <label className="block text-sm font-medium text-walle-beige mb-2">Symbol</label>
                   <select
                     value={botConfig.symbol}
-                    onChange={(e) =>
-                      updateBotParameter("", "symbol", e.target.value)
-                    }
+                    onChange={(e) => updateBotParameter('', 'symbol', e.target.value)}
                     className="w-full px-3 py-2 bg-walle-darkblue border border-walle-rust rounded text-white"
                   >
                     <option value="BTC-USDT">BTC-USDT</option>
@@ -783,109 +707,62 @@ export default function BotsPage() {
                 {/* Risk Management */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-walle-beige mb-2">
-                      Max Position %
-                    </label>
+                    <label className="block text-sm font-medium text-walle-beige mb-2">Max Position %</label>
                     <input
                       type="range"
                       min="1"
                       max="20"
-                      value={
-                        (botConfig.riskManagement.maxPositionSize as number) *
-                        100
-                      }
-                      onChange={(e) =>
-                        updateBotParameter(
-                          "riskManagement",
-                          "maxPositionSize",
-                          Number(e.target.value) / 100
-                        )
-                      }
+                      value={botConfig.riskManagement.maxPositionSize * 100}
+                      onChange={(e) => updateBotParameter('riskManagement', 'maxPositionSize', e.target.value / 100)}
                       className="w-full"
                     />
-                    <span className="text-xs text-walle-beige">
-                      {(
-                        (botConfig.riskManagement.maxPositionSize as number) *
-                        100
-                      ).toFixed(0)}
-                      %
-                    </span>
+                    <span className="text-xs text-walle-beige">{(botConfig.riskManagement.maxPositionSize * 100).toFixed(0)}%</span>
                   </div>
-
+                  
                   <div>
-                    <label className="block text-sm font-medium text-walle-beige mb-2">
-                      Stop Loss %
-                    </label>
+                    <label className="block text-sm font-medium text-walle-beige mb-2">Stop Loss %</label>
                     <input
                       type="range"
                       min="1"
                       max="10"
                       value={botConfig.riskManagement.stopLoss}
-                      onChange={(e) =>
-                        updateBotParameter(
-                          "riskManagement",
-                          "stopLoss",
-                          e.target.value
-                        )
-                      }
+                      onChange={(e) => updateBotParameter('riskManagement', 'stopLoss', e.target.value)}
                       className="w-full"
                     />
-                    <span className="text-xs text-walle-beige">
-                      {botConfig.riskManagement.stopLoss}%
-                    </span>
+                    <span className="text-xs text-walle-beige">{botConfig.riskManagement.stopLoss}%</span>
                   </div>
                 </div>
 
                 {/* Backtest Controls */}
                 <div className="border-t border-walle-rust pt-4">
-                  <h4 className="text-md font-medium text-walle-yellow mb-3">
-                    📊 Backtest Settings
-                  </h4>
+                  <h4 className="text-md font-medium text-walle-yellow mb-3">📊 Backtest Settings</h4>
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                      <label className="block text-sm font-medium text-walle-beige mb-2">
-                        Start Date
-                      </label>
+                      <label className="block text-sm font-medium text-walle-beige mb-2">Start Date</label>
                       <input
                         type="date"
                         value={botConfig.backtestConfig.startDate}
-                        onChange={(e) =>
-                          updateBotParameter(
-                            "backtestConfig",
-                            "startDate",
-                            e.target.value
-                          )
-                        }
+                        onChange={(e) => updateBotParameter('backtestConfig', 'startDate', e.target.value)}
                         className="w-full px-3 py-2 bg-walle-darkblue border border-walle-rust rounded text-white"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-walle-beige mb-2">
-                        End Date
-                      </label>
+                      <label className="block text-sm font-medium text-walle-beige mb-2">End Date</label>
                       <input
                         type="date"
                         value={botConfig.backtestConfig.endDate}
-                        onChange={(e) =>
-                          updateBotParameter(
-                            "backtestConfig",
-                            "endDate",
-                            e.target.value
-                          )
-                        }
+                        onChange={(e) => updateBotParameter('backtestConfig', 'endDate', e.target.value)}
                         className="w-full px-3 py-2 bg-walle-darkblue border border-walle-rust rounded text-white"
                       />
                     </div>
                   </div>
-
+                  
                   <Button
                     onClick={runUnifiedBacktest}
                     disabled={backtestLoading}
                     className="w-full bg-walle-orange text-walle-brown hover:bg-walle-yellow"
                   >
-                    {backtestLoading
-                      ? "⏳ Running Backtest..."
-                      : "📊 Run Backtest"}
+                    {backtestLoading ? '⏳ Running Backtest...' : '📊 Run Backtest'}
                   </Button>
                 </div>
 
@@ -895,29 +772,22 @@ export default function BotsPage() {
                     onClick={createOrUpdateBot}
                     className="flex-1 bg-walle-yellow text-walle-brown hover:bg-walle-orange"
                   >
-                    {selectedBot ? "💾 Update Bot" : "🚀 Create Bot"}
+                    {selectedBot ? '💾 Update Bot' : '🚀 Create Bot'}
                   </Button>
                   {selectedBot && (
                     <Button
-                      onClick={() =>
-                        selectedBot.isManual
-                          ? toggleManualBot(selectedBot.id)
-                          : toggleBot(selectedBot.id, selectedBot.active)
-                      }
-                      variant={selectedBot.active ? "secondary" : "primary"}
-                      className={
-                        selectedBot.active
-                          ? "bg-red-600 hover:bg-red-700"
-                          : "bg-green-600 hover:bg-green-700"
-                      }
+                      onClick={() => toggleBot(selectedBot.id, selectedBot.isActive, selectedBot.isManual)}
+                      variant={selectedBot.isActive ? 'secondary' : 'primary'}
+                      className={selectedBot.isActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
                     >
-                      {selectedBot.active ? "⏹ Stop" : "▶ Start"}
+                      {selectedBot.isActive ? '⏹ Stop' : '▶ Start'}
                     </Button>
                   )}
                 </div>
               </div>
             </Card>
           </div>
+        </div>
         </div>
 
         {/* Create Bot Form */}
@@ -937,7 +807,7 @@ export default function BotsPage() {
                   onChange={(e) =>
                     setNewBot({ ...newBot, name: e.target.value })
                   }
-                  className="w-full px-3 py-2 bg-walle-darkblue border border-walle-rust rounded text-white"
+                  className="w-full p-3 bg-walle-darkblue border border-walle-rust rounded text-white focus:border-walle-yellow focus:outline-none"
                   placeholder="Enter bot name"
                   required
                 />
@@ -951,7 +821,7 @@ export default function BotsPage() {
                   onChange={(e) =>
                     setNewBot({ ...newBot, strategyId: e.target.value })
                   }
-                  className="w-full px-3 py-2 bg-walle-darkblue border border-walle-rust rounded text-white"
+                  className="w-full p-3 bg-walle-darkblue border border-walle-rust rounded text-white focus:border-walle-yellow focus:outline-none"
                   required
                 >
                   <option value="">Select a strategy</option>
@@ -962,9 +832,10 @@ export default function BotsPage() {
                   ))}
                 </select>
               </div>
-              <div className="flex gap-3">
+              <div className="flex space-x-4">
                 <Button
                   type="submit"
+                  variant="primary"
                   className="bg-walle-yellow text-walle-brown hover:bg-walle-orange"
                 >
                   Create Bot
@@ -980,6 +851,335 @@ export default function BotsPage() {
             </form>
           </Card>
         )}
+
+      </div>
+    </div>
+  );
+}
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-semibold text-walle-yellow">
+              Your Bots ({totalBots})
+            </h2>
+            {totalBots > 0 && (
+              <div className="text-sm text-walle-beige">
+                {activeBots} running • {totalBots - activeBots} stopped
+              </div>
+            )}
+          </div>
+
+          {totalBots === 0 ? (
+            <div className="text-center py-16">
+              <div className="text-6xl mb-4">🤖</div>
+              <p className="text-xl text-walle-beige mb-2">
+                No bots created yet
+              </p>
+              <p className="text-sm text-gray-400 mb-6">
+                Create your first WALL-E bot to start automated trading
+              </p>
+              <Link href="/bots/manual">
+                <Button
+                  variant="primary"
+                  className="bg-walle-yellow text-walle-brown hover:bg-walle-orange font-bold"
+                >
+                  🚀 Create Your First Bot
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Template Bots */}
+              {bots.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold text-walle-orange mb-4">
+                    📋 Template Bots
+                  </h3>
+                  {bots.map((bot) => {
+                    const strategy = strategies.find(
+                      (s) => s.id === bot.strategyId
+                    );
+                    const activity = liveActivity[bot.id];
+                    const hasRecentActivity =
+                      activity && Date.now() - activity.timestamp < 5000;
+
+                    return (
+                      <div
+                        key={bot.id}
+                        className={`p-6 rounded-lg border-2 transition-all ${
+                          bot.active
+                            ? "bg-walle-darkblue border-walle-yellow"
+                            : "bg-walle-brown border-walle-rust"
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-3">
+                              <div className="text-2xl">
+                                {bot.active ? "🟢" : "⚫"}
+                              </div>
+                              <h3 className="text-xl font-bold text-walle-yellow">
+                                {bot.name}
+                              </h3>
+                              <StatusPill
+                                status={bot.active ? "active" : "inactive"}
+                              />
+                              {hasRecentActivity && (
+                                <span className="px-2 py-1 bg-green-500 text-white text-xs rounded animate-pulse">
+                                  ⚡ Live
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                              <div>
+                                <div className="text-xs text-walle-beige mb-1">
+                                  Strategy
+                                </div>
+                                <div className="text-sm font-semibold text-white">
+                                  {strategy?.name || "Unknown"}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-xs text-walle-beige mb-1">
+                                  Created
+                                </div>
+                                <div className="text-sm font-semibold text-white">
+                                  {new Date(bot.createdAt).toLocaleDateString()}
+                                </div>
+                              </div>
+                            </div>
+
+                            {strategy?.description && (
+                              <p className="text-sm text-walle-beige mb-4">
+                                {strategy.description}
+                              </p>
+                            )}
+
+                            {activity && hasRecentActivity && (
+                              <div className="mt-4 p-3 bg-walle-darkblue rounded border border-walle-rust">
+                                <div className="text-xs text-walle-beige mb-1">
+                                  Recent Activity
+                                </div>
+                                <div className="text-sm text-white">
+                                  {activity.action ||
+                                    "Trading activity detected"}{" "}
+                                  •{" "}
+                                  {new Date(
+                                    activity.timestamp
+                                  ).toLocaleTimeString()}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex flex-col space-y-2 ml-4">
+                            {bot.active ? (
+                              <Button
+                                onClick={() => toggleBot(bot.id, bot.active)}
+                                variant="danger"
+                                size="sm"
+                                className="font-semibold"
+                              >
+                                ⏹️ Stop Bot
+                              </Button>
+                            ) : (
+                              <Button
+                                onClick={() => toggleBot(bot.id, bot.active)}
+                                variant="primary"
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700 font-semibold"
+                              >
+                                ▶️ Start Bot
+                              </Button>
+                            )}
+                            <Button variant="outline" size="sm">
+                              ⚙️ Configure
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-xs"
+                            >
+                              📊 View Stats
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Manual Bots */}
+              {manualBots.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-walle-orange mb-4">
+                    🛠️ Manual Bots
+                  </h3>
+                  {manualBots.map((bot) => {
+                    const activity = liveActivity[bot.id];
+                    const hasRecentActivity =
+                      activity && Date.now() - activity.timestamp < 5000;
+
+                    return (
+                      <div
+                        key={bot.id}
+                        className={`p-6 rounded-lg border-2 transition-all ${
+                          bot.isActive
+                            ? "bg-walle-darkblue border-walle-yellow"
+                            : "bg-walle-brown border-walle-rust"
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-3">
+                              <div className="text-2xl">
+                                {bot.isActive ? "🟢" : "⚫"}
+                              </div>
+                              <h3 className="text-xl font-bold text-walle-yellow">
+                                {bot.name}
+                              </h3>
+                              <StatusPill
+                                status={bot.isActive ? "active" : "inactive"}
+                              />
+                              <span className="px-2 py-1 bg-blue-500 text-white text-xs rounded">
+                                🛠️ Manual
+                              </span>
+                              {hasRecentActivity && (
+                                <span className="px-2 py-1 bg-green-500 text-white text-xs rounded animate-pulse">
+                                  ⚡ Live
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                              <div>
+                                <div className="text-xs text-walle-beige mb-1">
+                                  Symbol
+                                </div>
+                                <div className="text-sm font-semibold text-white">
+                                  {bot.symbol}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-xs text-walle-beige mb-1">
+                                  Rules
+                                </div>
+                                <div className="text-sm font-semibold text-white">
+                                  {bot.rules?.length || 0} custom rules
+                                </div>
+                              </div>
+                            </div>
+
+                            {bot.description && (
+                              <p className="text-sm text-walle-beige mb-4">
+                                {bot.description}
+                              </p>
+                            )}
+
+                            <div className="grid grid-cols-3 gap-4 mb-4">
+                              <div>
+                                <div className="text-xs text-walle-beige mb-1">
+                                  Max Position
+                                </div>
+                                <div className="text-sm font-semibold text-white">
+                                  {(
+                                    bot.riskManagement?.maxPositionSize * 100 ||
+                                    0
+                                  ).toFixed(1)}
+                                  %
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-xs text-walle-beige mb-1">
+                                  Stop Loss
+                                </div>
+                                <div className="text-sm font-semibold text-white">
+                                  {bot.riskManagement?.stopLoss || 0}%
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-xs text-walle-beige mb-1">
+                                  Take Profit
+                                </div>
+                                <div className="text-sm font-semibold text-white">
+                                  {bot.riskManagement?.takeProfit || 0}%
+                                </div>
+                              </div>
+                            </div>
+
+                            {activity && hasRecentActivity && (
+                              <div className="mt-4 p-3 bg-walle-darkblue rounded border border-walle-rust">
+                                <div className="text-xs text-walle-beige mb-1">
+                                  Recent Activity
+                                </div>
+                                <div className="text-sm text-white">
+                                  {activity.action ||
+                                    "Trading activity detected"}{" "}
+                                  •{" "}
+                                  {new Date(
+                                    activity.timestamp
+                                  ).toLocaleTimeString()}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex flex-col space-y-2 ml-4">
+                            {bot.isActive ? (
+                              <Button
+                                onClick={() =>
+                                  toggleBot(bot.id, bot.isActive, true)
+                                }
+                                variant="danger"
+                                size="sm"
+                                className="font-semibold"
+                              >
+                                ⏹️ Stop Bot
+                              </Button>
+                            ) : (
+                              <Button
+                                onClick={() =>
+                                  toggleBot(bot.id, bot.isActive, true)
+                                }
+                                variant="primary"
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700 font-semibold"
+                              >
+                                ▶️ Start Bot
+                              </Button>
+                            )}
+                            <Button
+                              onClick={() => configureManualBot(bot.id)}
+                              variant="outline"
+                              size="sm"
+                            >
+                              ⚙️ Configure
+                            </Button>
+                            <Button
+                              onClick={() => deleteManualBot(bot.id)}
+                              variant="danger"
+                              size="sm"
+                              className="text-xs"
+                            >
+                              🗑️ Delete
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-xs"
+                            >
+                              📊 View Stats
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
       </div>
     </div>
   );
