@@ -1,8 +1,10 @@
 import PgBoss from 'pg-boss';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../../api/generated/prisma/client';
 
 export function registerReplayProcessor(boss: PgBoss) {
-  const prisma = new PrismaClient();
+  const prisma = new PrismaClient({
+    accelerateUrl: process.env.DATABASE_URL || '',
+  });
   boss.work('backtest.replay', async (job) => {
     const { fromTs, toTs, symbol } = job.data as any;
     const q: any = { where: { symbol } };

@@ -1,4 +1,4 @@
-import { MarketDataAdapter } from '../interfaces';
+import { MarketDataAdapter, PriceTick } from '../interfaces';
 
 export interface Tick {
   ts: string; // ISO timestamp
@@ -30,9 +30,16 @@ export class ReplayMarketAdapter implements MarketDataAdapter {
     });
   }
 
-  async getCandles(symbol: string, timeframe: string) {
+  async getCandles(symbol: string, timeframe: string): Promise<PriceTick[]> {
     // simple grouping by timeframe not implemented; return raw ticks for now
-    return this.ticks.filter(t => t.symbol === symbol);
+    return this.ticks
+      .filter(t => t.symbol === symbol)
+      .map(t => ({
+        symbol: t.symbol,
+        price: Number(t.price),
+        ts: new Date(t.ts),
+        source: t.source,
+      }));
   }
 
   start() {

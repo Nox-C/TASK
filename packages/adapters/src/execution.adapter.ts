@@ -1,6 +1,6 @@
 import { PaperExecutionAdapter } from './paper/execution.adapter.js';
 
-export class ExecutionAdapter {
+export class BotExecutionAdapter {
   private adapter: PaperExecutionAdapter;
 
   constructor() {
@@ -8,13 +8,13 @@ export class ExecutionAdapter {
   }
 
   async startBot(botId: string) {
-    console.log(`[ExecutionAdapter] Starting bot ${botId}`);
+    console.log(`[BotExecutionAdapter] Starting bot ${botId}`);
     // Placeholder implementation
     return { success: true, botId };
   }
 
   async stopBot(botId: string) {
-    console.log(`[ExecutionAdapter] Stopping bot ${botId}`);
+    console.log(`[BotExecutionAdapter] Stopping bot ${botId}`);
     // Placeholder implementation
     return { success: true, botId };
   }

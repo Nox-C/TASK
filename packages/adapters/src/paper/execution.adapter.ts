@@ -1,5 +1,3 @@
-import fetch from 'node-fetch';
-
 export class PaperExecutionAdapter {
   constructor(private readonly apiBase: string = process.env.API_BASE || 'http://localhost:3001') {}
 
