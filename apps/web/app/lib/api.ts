@@ -70,6 +70,10 @@ export interface TaskRun {
   status: "enqueued" | "running" | "completed" | "failed";
   startedAt: string;
   finishedAt?: string;
+  task?: {
+    id: string;
+    name: string;
+  };
 }
 
 export const Api = {
@@ -109,6 +113,14 @@ export const Api = {
       fetchJSON<TaskRun>(
         `/tasks/${id}/run${actorId ? `?actorId=${actorId}` : ""}`,
         { method: "POST" }
+      ),
+    runs: (taskId: string, limit?: number) =>
+      fetchJSON<TaskRun[]>(
+        `/tasks/${taskId}/runs${limit ? `?limit=${limit}` : ""}`
+      ),
+    recentRuns: (limit?: number) =>
+      fetchJSON<TaskRun[]>(
+        `/tasks/runs/recent${limit ? `?limit=${limit}` : ""}`
       ),
   },
   backtest: {

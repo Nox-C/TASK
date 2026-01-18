@@ -86,6 +86,37 @@ export class TasksService {
     return { task, run };
   }
 
+  async findRuns(taskId: string, limit: number = 50) {
+    return this.prisma.taskRun.findMany({
+      where: { taskId },
+      orderBy: { startedAt: "desc" },
+      take: limit,
+      include: {
+        task: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+  }
+
+  async findRecentRuns(limit: number = 50) {
+    return this.prisma.taskRun.findMany({
+      orderBy: { startedAt: "desc" },
+      take: limit,
+      include: {
+        task: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+  }
+
   async handleWebhook(key: string, payload: any) {
     // Find a webhook trigger matching the key
     const trigger = await this.prisma.taskTrigger.findFirst({

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { Api } from "./lib/api";
 import { useDashboardStore } from "./lib/store";
+import { connectActivity } from "./lib/ws";
 
 interface Bot {
   id: string;
@@ -20,13 +21,45 @@ interface SystemHealth {
 }
 
 export default function Page() {
-  const { bots, stats, health, loading, refresh } = useDashboardStore();
+  const { 
+    bots, 
+    stats, 
+    health, 
+    loading, 
+    taskRuns, 
+    refresh, 
+    updateMarketData, 
+    addActivity, 
+    setWebSocketStatus 
+  } = useDashboardStore();
 
   useEffect(() => {
     refresh();
     const interval = setInterval(refresh, 30000);
     return () => clearInterval(interval);
   }, [refresh]);
+
+  useEffect(() => {
+    const disconnect = connectActivity({
+      onEvent: (evt) => {
+        addActivity({ type: evt.type, message: evt.message });
+        
+        // Update market data from WebSocket
+        if (evt.type === 'market' && evt.payload?.symbol && evt.payload?.price) {
+          updateMarketData(
+            evt.payload.symbol,
+            evt.payload.price,
+            evt.payload.timestamp || Date.now()
+          );
+        }
+      },
+      onStatusChange: (status) => {
+        setWebSocketStatus(status);
+      },
+    });
+
+    return disconnect;
+  }, [addActivity, updateMarketData, setWebSocketStatus]);
 
   const quickAction = async (action: string, botId?: string) => {
     try {
@@ -127,7 +160,7 @@ export default function Page() {
               <div
                 className={`w-3 h-3 rounded-full mr-2 ${
                   health.api === "healthy"
-                    ? "bg-green-500"
+                    ? "bg-green-500 animate-pulse"
                     : health.api === "degraded"
                     ? "bg-yellow-500"
                     : "bg-red-500"
@@ -139,7 +172,7 @@ export default function Page() {
               <div
                 className={`w-3 h-3 rounded-full mr-2 ${
                   health.database === "healthy"
-                    ? "bg-green-500"
+                    ? "bg-green-500 animate-pulse"
                     : health.database === "degraded"
                     ? "bg-yellow-500"
                     : "bg-red-500"
@@ -151,13 +184,23 @@ export default function Page() {
               <div
                 className={`w-3 h-3 rounded-full mr-2 ${
                   health.worker === "healthy"
-                    ? "bg-green-500"
+                    ? "bg-green-500 animate-pulse"
                     : health.worker === "degraded"
                     ? "bg-yellow-500"
                     : "bg-red-500"
                 }`}
               ></div>
               <span>Worker</span>
+            </div>
+            <div className="flex items-center">
+              <div
+                className={`w-3 h-3 rounded-full mr-2 ${
+                  health.websocket === "connected"
+                    ? "bg-green-500 animate-pulse"
+                    : "bg-red-500"
+                }`}
+              ></div>
+              <span>Live Feed</span>
             </div>
           </div>
         </div>
@@ -348,24 +391,61 @@ export default function Page() {
 
         {/* Enhanced Latest TASK Runs */}
         <div className="bg-gradient-to-br from-gray-800 to-gray-700 rounded-lg p-6 border border-gray-600 shadow-xl">
-          <div className="flex items-center space-x-3 mb-4">
-            <img
-              src="/wall-e-icon.png"
-              alt="WALLe"
-              className="w-10 h-10 rounded"
-            />
-            <h2 className="text-2xl font-bold text-white">
-              Latest WALLe TASK Runs
-            </h2>
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center space-x-3">
+              <img
+                src="/wall-e-icon.png"
+                alt="WALLe"
+                className="w-10 h-10 rounded"
+              />
+              <h2 className="text-2xl font-bold text-white">
+                Latest WALLe TASK Runs
+              </h2>
+            </div>
+            <Link
+              href="/tasks"
+              className="text-purple-400 hover:text-purple-300 transition-colors"
+            >
+              View All →
+            </Link>
           </div>
           <div className="space-y-3">
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-purple-600 rounded-full mx-auto mb-4 animate-pulse"></div>
-              <p className="text-gray-400">No recent WALLe task runs</p>
-              <p className="text-sm text-gray-500 mt-2">
-                TASK automation history will appear here
-              </p>
-            </div>
+            {taskRuns.slice(0, 5).map((run) => (
+              <div
+                key={run.id}
+                className="flex justify-between items-center p-4 bg-gray-900 rounded-lg border border-gray-600 hover:border-purple-400 transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className={`w-2 h-2 rounded-full ${
+                    run.status === 'completed' ? 'bg-green-500 animate-pulse' :
+                    run.status === 'failed' ? 'bg-red-500' :
+                    run.status === 'running' ? 'bg-blue-500 animate-pulse' :
+                    'bg-yellow-500'
+                  }`}></div>
+                  <div>
+                    <h4 className="font-semibold text-white">
+                      {run.task?.name || `Task ${run.taskId.slice(0, 8)}`}
+                    </h4>
+                    <p className="text-sm text-gray-400">
+                      Started: {new Date(run.startedAt).toLocaleString()}
+                      {run.finishedAt && ` • Finished: ${new Date(run.finishedAt).toLocaleString()}`}
+                    </p>
+                  </div>
+                </div>
+                <StatusPill status={run.status === 'completed' ? 'success' : run.status === 'failed' ? 'error' : run.status === 'running' ? 'active' : 'pending'} />
+              </div>
+            ))}
+            {taskRuns.length === 0 && (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center">
+                  <span className="text-white text-2xl">⚡</span>
+                </div>
+                <p className="text-gray-400">No recent WALLe task runs</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  TASK automation history will appear here
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
