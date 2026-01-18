@@ -33,6 +33,19 @@ export class TasksController {
     return this.tasks.findById(id);
   }
 
+  @common.Get(":id/runs")
+  async getRuns(
+    @common.Param("id") id: string,
+    @common.Query("limit") limit?: string
+  ) {
+    return this.tasks.findRuns(id, limit ? parseInt(limit) : 50);
+  }
+
+  @common.Get("runs/recent")
+  async getRecentRuns(@common.Query("limit") limit?: string) {
+    return this.tasks.findRecentRuns(limit ? parseInt(limit) : 50);
+  }
+
   @common.Post(":id/run")
   async run(
     @common.Param("id") id: string,

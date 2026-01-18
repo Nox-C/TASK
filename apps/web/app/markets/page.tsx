@@ -31,16 +31,7 @@ export default function MarketsPage() {
   const [chartType, setChartType] = useState<"candlestick" | "line">(
     "candlestick"
   );
-  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([
-    { symbol: "BTC-USDT", price: 45000, change24h: 2.5, volume: 1200000 },
-    { symbol: "ETH-USDT", price: 3200, change24h: -1.2, volume: 800000 },
-    { symbol: "SOL-USDT", price: 120, change24h: 5.8, volume: 400000 },
-    { symbol: "ADA-USDT", price: 0.62, change24h: 3.2, volume: 250000 },
-    { symbol: "DOT-USDT", price: 8.5, change24h: -0.5, volume: 180000 },
-    { symbol: "MATIC-USDT", price: 0.85, change24h: 1.8, volume: 320000 },
-    { symbol: "UNI-USDT", price: 6.2, change24h: -2.1, volume: 150000 },
-    { symbol: "LINK-USDT", price: 14.5, change24h: 4.3, volume: 280000 },
-  ]);
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [exchanges, setExchanges] = useState<ExchangeStatus[]>([
     { name: "Binance", connected: false, lastUpdate: 0 },
@@ -49,20 +40,59 @@ export default function MarketsPage() {
   const [isLoadingChart, setIsLoadingChart] = useState(false);
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
+  // Initialize default watchlist symbols
+  useEffect(() => {
+    const defaultSymbols = [
+      "BTC-USDT", "ETH-USDT", "SOL-USDT", "ADA-USDT",
+      "DOT-USDT", "MATIC-USDT", "UNI-USDT", "LINK-USDT"
+    ];
+    
+    setWatchlist(defaultSymbols.map(symbol => ({
+      symbol,
+      price: 0,
+      change24h: 0,
+      volume: 0
+    })));
+  }, []);
+
   // WebSocket connection for real-time updates
   useEffect(() => {
     const disconnect = connectActivity({
       onEvent: (data) => {
         if ((data as any).type === "market" && (data as any).payload?.symbol) {
           const priceData: any = (data as any).payload;
-          setCurrentPrice(priceData.price || 0);
-          setWatchlist((prev) =>
-            prev.map((item) =>
-              item.symbol === priceData.symbol
-                ? { ...item, price: priceData.price || 0 }
-                : item
-            )
-          );
+          
+          // Update current price if this is the selected symbol
+          if (priceData.symbol === selectedSymbol) {
+            setCurrentPrice(priceData.price || 0);
+          }
+          
+          // Update or add to watchlist with real data
+          setWatchlist((prev) => {
+            const existingIndex = prev.findIndex(item => item.symbol === priceData.symbol);
+            
+            if (existingIndex >= 0) {
+              // Update existing item
+              const updated = [...prev];
+              updated[existingIndex] = {
+                ...updated[existingIndex],
+                price: priceData.price || 0,
+                change24h: priceData.change || 0,
+                volume: priceData.volume || 0,
+              };
+              return updated;
+            } else if (prev.length < 20) {
+              // Add new symbol if we have room
+              return [...prev, {
+                symbol: priceData.symbol,
+                price: priceData.price || 0,
+                change24h: priceData.change || 0,
+                volume: priceData.volume || 0,
+              }];
+            }
+            return prev;
+          });
+          
           setIsConnected(true);
 
           // Update exchange status based on data source

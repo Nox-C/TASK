@@ -1,20 +1,13 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=WALL-E Trading Bot Control Panel
-Comment=Intelligent trading bot control panel with real-time market data and strategy backtesting
-Exec=google-chrome --app=http://localhost:3000
-Icon=wall-e-icon
+Name=TASK Trading Bot Control Panel
+Comment=Production-ready trading bot control panel with real-time exchange data, live WebSocket feeds, and strategy backtesting
+Exec=/tmp/Nox-C/TASK/task-control-panel.sh
+Icon=/tmp/Nox-C/TASK/apps/web/public/wall-e-icon.png
 Terminal=false
-Categories=Office;Finance;
-StartupWMClass=WALL-E Trading Bot Control Panel
+Categories=Office;Finance;Network;
+StartupWMClass=TASK Control Panel
 MimeType=text/html;text/xml;application/xhtml_xml;
 StartupNotify=true
-
-# Alternative browsers (uncomment as needed)
-# Exec=firefox --new-window http://localhost:3000
-# Exec=microsoft-edge --app=http://localhost:3000
-# Exec=chromium --app=http://localhost:3000
-
-# For production deployment, replace localhost:3000 with your domain:
-# Exec=google-chrome --app=https://your-domain.com
+X-GNOME-Autostart-enabled=false

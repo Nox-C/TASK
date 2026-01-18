@@ -295,27 +295,6 @@ export class WsGateway implements OnGatewayInit {
     });
   }
 
-  private getBasePrice(symbol: string): number {
-    const basePrices: { [key: string]: number } = {
-      "BTC-USDT": 45000,
-      "ETH-USDT": 2500,
-      "BNB-USDT": 320,
-      "SOL-USDT": 105,
-      "ADA-USDT": 0.65,
-      "XRP-USDT": 0.55,
-      "DOT-USDT": 7.8,
-      "DOGE-USDT": 0.085,
-      "AVAX-USDT": 38,
-      "MATIC-USDT": 0.92,
-      "LINK-USDT": 14.5,
-      "UNI-USDT": 6.2,
-      "LTC-USDT": 72,
-      "BCH-USDT": 235,
-      "ATOM-USDT": 9.8,
-    };
-    return basePrices[symbol] || 100;
-  }
-
   @SubscribeMessage("ping")
   handlePing(client: any, payload: any) {
     client.emit("pong", payload);
