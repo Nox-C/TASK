@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_DIR="/home/nox/TASK"
+REPO_DIR="/tmp/Nox-C/TASK"
 URL="http://localhost:3000"
 LOCK="/tmp/task-control-panel.lock"
 CHROMIUM_BIN="/usr/bin/chromium"
