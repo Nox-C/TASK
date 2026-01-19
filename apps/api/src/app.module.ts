@@ -14,6 +14,7 @@ import { StrategyModule } from "./strategy/strategy.module";
 import { TasksModule } from "./tasks/tasks.module";
 import { UsersModule } from "./users/users.module";
 import { WsGateway } from "./ws/ws.gateway";
+import { WsModule } from "./ws/ws.module";
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { WsGateway } from "./ws/ws.gateway";
     MarketModule,
     MarketReplayModule,
     BacktestModule,
+    WsModule,
   ],
   controllers: [],
   providers: [WsGateway, MarketEventsService],

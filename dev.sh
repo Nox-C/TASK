@@ -18,7 +18,7 @@ WORKER_PID=$!
 echo ""
 echo "✅ All services started!"
 echo "🌐 Web app: http://localhost:3000"
-echo "📡 API: http://localhost:3001"
+echo "📡 API: http://localhost:3002"
 echo ""
 echo "Waiting for services to be ready..."
 sleep 5

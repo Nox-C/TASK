@@ -2,13 +2,16 @@
   "name": "@task/adapters",
   "version": "0.0.0",
   "private": true,
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./interfaces": "./src/interfaces/index.ts",
-    "./paper": "./src/paper/execution.adapter.ts",
-    "./replay": "./src/replay/market.adapter.ts"
+    ".": "./dist/index.js",
+    "./interfaces": "./dist/interfaces/index.js",
+    "./paper": "./dist/paper/execution.adapter.js",
+    "./replay": "./dist/replay/market.adapter.js"
+  },
+  "scripts": {
+    "build": "tsc"
   },
   "dependencies": {
     "@task/shared": "workspace:*"

@@ -1,5 +1,5 @@
 import PgBoss from 'pg-boss';
-import { PrismaClient } from '../../../api/generated/prisma/client';
+import { PrismaClient } from '../../../api/generated/prisma/client.js';
 
 export function registerReplayProcessor(boss: PgBoss) {
   const prisma = new PrismaClient({
