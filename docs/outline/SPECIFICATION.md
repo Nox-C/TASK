@@ -2,7 +2,7 @@
 
 ## Overview
 
-The TASK Control Panel MVP is a comprehensive trading automation platform that combines bot management, portfolio tracking, and task-based automation in a single interface.
+The TASK Control Panel is a comprehensive trading bot creation and management station. it allows backtesting and creating any type of bot that will eceute any stratagy it is configured to. both full manuel and automation options as well as mixed where one can choose from 100s of prebuiltsetting to run or create there own it integreates web3 and cex so a bot can be configured to run on one or the other or even more complex stratagies where it will utilize both such as arbitrage and similar stratagies. also want AI to be integrated to help with analysis and profit increase. It will sport a dark theme with WALL-E ui themed components and .pngs the app icon will be a WALL-E Bot
 
 ## Core Components
 
@@ -24,7 +24,7 @@ The TASK Control Panel MVP is a comprehensive trading automation platform that c
 - Balance and position monitoring
 
 ### 4. Task Automation (TASK)
-- Trigger-based automation system
+- Fully automated and manuel stratagies with backtesting
 - Cron scheduling support
 - Webhook triggers
 - Bot lifecycle automation
@@ -39,7 +39,8 @@ The TASK Control Panel MVP is a comprehensive trading automation platform that c
 ### 6. Market Data
 - Real-time price feeds
 - Historical data storage
-- Multiple venue support
+- Multiple venue support dex and cex
+- Advanced Charts with visual integration for paramater setups with analitical diplay per bot and stunning new 3d depth candle charts
 - Data replay capabilities
 
 ## Technical Architecture

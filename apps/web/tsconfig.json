@@ -23,7 +23,10 @@
       "@/*": ["./app/*"],
       "@task/ui": ["../../packages/ui/src/index.tsx"],
       "@task/shared": ["../../packages/shared/src/index.ts"]
-    }
+    },
+    "types": ["node"],
+    "forceConsistentCasingInFileNames": true,
+    "skipDefaultLibCheck": true
   },
   "include": [
     "next-env.d.ts",
@@ -32,7 +35,5 @@
     "**/*.tsx",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["node_modules", "../../node_modules/.pnpm/ox@*/**/*"]
 }

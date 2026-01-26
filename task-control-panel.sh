@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_DIR="/tmp/Nox-C/TASK"
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 URL="http://localhost:3000"
 LOCK="/tmp/task-control-panel.lock"
 CHROMIUM_BIN="/usr/bin/chromium"
@@ -59,4 +59,3 @@ BROWSER_PID=$!
 
 # When you close the window, the script exits and cleanup() runs.
 wait "$BROWSER_PID" || true
-

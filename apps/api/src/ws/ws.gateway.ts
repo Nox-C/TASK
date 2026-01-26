@@ -1,31 +1,50 @@
 import { Logger } from "@nestjs/common";
 import {
-  OnGatewayInit,
-  SubscribeMessage,
-  WebSocketGateway,
-  WebSocketServer,
+    OnGatewayInit,
+    SubscribeMessage,
+    WebSocketGateway,
+    WebSocketServer,
 } from "@nestjs/websockets";
 import { Server } from "socket.io";
 import WebSocket from "ws";
 import { MarketEventsService } from "../market/events.service";
 
 @WebSocketGateway({
-  cors: { origin: "*" },
+  cors: {
+    origin: ["http://localhost:3000", "http://localhost:3002"],
+    methods: ["GET", "POST"],
+  },
   transports: ["websocket", "polling"],
+  pingTimeout: 60000,
+  pingInterval: 25000,
 })
 export class WsGateway implements OnGatewayInit {
   static instance: WsGateway | null = null;
   @WebSocketServer()
   server!: Server;
   private readonly logger = new Logger(WsGateway.name);
+  private reconnectAttempts: Record<string, number> = {};
 
   constructor(private readonly marketEvents: MarketEventsService) {}
 
   afterInit() {
     WsGateway.instance = this;
     this.logger.log(
-      "WebSocket gateway initialized with real exchange connections"
+      "WebSocket gateway initialized with real exchange connections",
     );
+
+    // Handle connection events
+    this.server.on("connection", (socket) => {
+      this.logger.log(`Client connected: ${socket.id}`);
+
+      socket.on("disconnect", (reason) => {
+        this.logger.log(`Client disconnected: ${socket.id}, reason: ${reason}`);
+      });
+
+      socket.on("error", (error) => {
+        this.logger.error(`Socket error for ${socket.id}:`, error);
+      });
+    });
 
     // Connect to real exchanges
     this.connectToExchanges();
@@ -44,7 +63,7 @@ export class WsGateway implements OnGatewayInit {
 
   private connectBinance() {
     const binanceWs = new WebSocket(
-      "wss://stream.binance.com:9443/ws/!ticker@arr"
+      "wss://stream.binance.com:9443/ws/!ticker@arr",
     );
 
     binanceWs.on("open", () => {
@@ -68,6 +87,7 @@ export class WsGateway implements OnGatewayInit {
                 low24h: parseFloat(ticker.l || "0"),
               };
 
+              // Broadcast to all connected clients
               this.server.emit("market_price", priceData);
               this.server.emit("market_event", {
                 type: "market",
@@ -97,11 +117,18 @@ export class WsGateway implements OnGatewayInit {
 
     binanceWs.on("error", (error) => {
       this.logger.error("Binance WebSocket connection error:", error);
-      setTimeout(() => this.connectBinance(), 5000);
+      // Exponential backoff for reconnection
+      const attempts = this.reconnectAttempts["binance"] || 0;
+      setTimeout(
+        () => this.connectBinance(),
+        Math.min(1000 * Math.pow(2, attempts), 30000),
+      );
+      this.reconnectAttempts["binance"] = attempts + 1;
     });
 
     binanceWs.on("close", () => {
       this.logger.log("Binance WebSocket closed, reconnecting...");
+      this.reconnectAttempts["binance"] = 0; // Reset on successful close
       setTimeout(() => this.connectBinance(), 5000);
     });
   }

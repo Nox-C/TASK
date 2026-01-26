@@ -18,24 +18,42 @@ export function connectActivity(opts: {
   onStatusChange?: (s: WsStatus) => void;
 }) {
   if (!socket) {
-    const wsUrl =
-      process.env.NEXT_PUBLIC_WS_URL ||
-      process.env.NEXT_PUBLIC_API_URL ||
-      "http://localhost:3001";
+    // Use HTTP for development, WS for production
+    const isDev = process.env.NODE_ENV === "development";
+    const wsUrl = isDev
+      ? process.env.NEXT_PUBLIC_WS_URL_INSECURE || "ws://localhost:3001"
+      : process.env.NEXT_PUBLIC_WS_URL || "wss://localhost:3001";
+
+    console.log(`Connecting to WebSocket: ${wsUrl} (dev: ${isDev})`);
 
     socket = io(wsUrl, {
-      transports: ["websocket"],
+      transports: isDev ? ["websocket", "polling"] : ["websocket"],
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000,
+      forceNew: false,
     });
 
     socket.on("connect", () => {
+      console.log("WebSocket connected to:", wsUrl);
       opts.onStatusChange?.("connected");
     });
-    socket.on("disconnect", () => {
+    socket.on("disconnect", (reason) => {
+      console.log("WebSocket disconnected:", reason);
       opts.onStatusChange?.("disconnected");
+    });
+    socket.on("connect_error", (error) => {
+      console.error("WebSocket connection error:", error);
+      opts.onStatusChange?.("disconnected");
+    });
+    socket.on("reconnect", (attemptNumber) => {
+      console.log("WebSocket reconnected after", attemptNumber, "attempts");
+    });
+    socket.on("reconnect_attempt", (attemptNumber) => {
+      console.log("WebSocket reconnection attempt:", attemptNumber);
     });
 
     const forward = (type: ActivityEvent["type"]) => (data: any) => {

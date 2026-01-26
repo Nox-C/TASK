@@ -9,13 +9,23 @@ export function registerStopBot(boss: any) {
     const { botId } = job.data || {};
     console.log('[worker] stop_bot job received', { botId, data: job.data });
 
-    // Placeholder: call API or update DB to mark bot stopped.
-    // TODO: replace with real adapter call (ExecutionAdapter / BotService)
+    // Call API to stop the bot
+    try {
+      const response = await fetch(`http://localhost:3002/bots/${botId}/stop`, {
+        method: 'POST',
+      });
 
-    // Simulate work
-    await new Promise((r) => setTimeout(r, 300));
+      if (!response.ok) {
+        throw new Error(`API returned ${response.status} ${response.statusText}`);
+      }
 
-    console.log(`[worker] bot ${botId} stopped (simulated)`);
-    return { ok: true };
+      const result = await response.json();
+      console.log(`[worker] bot ${botId} stopped successfully`, result);
+      return { ok: true, result };
+    } catch (error) {
+      console.error(`[worker] failed to stop bot ${botId}`, error);
+      // Optionally re-throw or handle the error to pg-boss
+      throw error;
+    }
   });
 }

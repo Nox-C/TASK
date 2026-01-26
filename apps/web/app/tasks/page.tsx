@@ -23,9 +23,12 @@ export default function TasksPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const tasksData = await Api.tasks.list();
+        const [tasksData, taskRunsData] = await Promise.all([
+          Api.tasks.list(),
+          Api.tasks.recentRuns(20), // Fetch last 20 runs
+        ]);
         setTasks(tasksData);
-        setTaskRuns([]); // TODO: Implement task runs API
+        setTaskRuns(taskRunsData);
         setLoading(false);
       } catch (error) {
         // Log error for debugging in development
