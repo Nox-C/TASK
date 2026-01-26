@@ -6,7 +6,7 @@ interface Position {
   qty: number;
   avgPrice: number;
   currentPrice: number;
-  unrealizedPnL: number;
+  unrealizedPnL: number | string;
   accountId: string;
 }
 
@@ -25,13 +25,16 @@ interface PositionCardProps {
 }
 
 export const PositionCard = ({ position }: PositionCardProps) => {
+  const unrealizedPnL =
+    typeof position.unrealizedPnL === "string"
+      ? parseFloat(position.unrealizedPnL)
+      : position.unrealizedPnL;
   const marketValue = position.qty * position.currentPrice;
   const percentReturn =
     ((position.currentPrice - position.avgPrice) / position.avgPrice) * 100;
 
-  const pnlColorClass =
-    position.unrealizedPnL >= 0 ? "text-green-400" : "text-red-400";
-  const pnlPrefix = position.unrealizedPnL >= 0 ? "+" : "";
+  const pnlColorClass = unrealizedPnL >= 0 ? "text-green-400" : "text-red-400";
+  const pnlPrefix = unrealizedPnL >= 0 ? "+" : "";
 
   return (
     <div className="p-4 bg-gray-900 rounded-lg border border-gray-700 hover:border-blue-500 transition-colors shadow-md">
@@ -51,7 +54,7 @@ export const PositionCard = ({ position }: PositionCardProps) => {
           </div>
           <div className={`text-sm mt-0.5 font-bold ${pnlColorClass}`}>
             {pnlPrefix}
-            {formatCurrency(position.unrealizedPnL, 2)}
+            {formatCurrency(unrealizedPnL, 2)}
           </div>
         </div>
       </div>

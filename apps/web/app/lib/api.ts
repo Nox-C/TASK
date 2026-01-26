@@ -5,7 +5,7 @@ export const API_BASE =
 
 export async function fetchJSON<T>(
   path: string,
-  init?: RequestInit & { timeoutMs?: number }
+  init?: RequestInit & { timeoutMs?: number },
 ): Promise<T> {
   const { timeoutMs = 10000, ...rest } = init || {};
   const controller = new AbortController();
@@ -38,8 +38,9 @@ export interface Bot {
   createdAt: string;
 }
 export interface PnlSnapshot {
-  totalValue?: number | string;
-  realizedPnl?: number | string;
+  totalValue?: string;
+  realizedPnl?: string;
+  unrealizedPnl?: string;
   ts?: string;
 }
 export interface Strategy {
@@ -97,7 +98,7 @@ export const Api = {
   pnl: {
     snapshots: (range?: string) =>
       fetchJSON<PnlSnapshot[]>(
-        `/pnl/snapshots${range ? `?range=${encodeURIComponent(range)}` : ""}`
+        `/pnl/snapshots${range ? `?range=${encodeURIComponent(range)}` : ""}`,
       ),
   },
   tasks: {
@@ -112,15 +113,15 @@ export const Api = {
     run: (id: string, actorId?: string) =>
       fetchJSON<TaskRun>(
         `/tasks/${id}/run${actorId ? `?actorId=${actorId}` : ""}`,
-        { method: "POST" }
+        { method: "POST" },
       ),
     runs: (taskId: string, limit?: number) =>
       fetchJSON<TaskRun[]>(
-        `/tasks/${taskId}/runs${limit ? `?limit=${limit}` : ""}`
+        `/tasks/${taskId}/runs${limit ? `?limit=${limit}` : ""}`,
       ),
     recentRuns: (limit?: number) =>
       fetchJSON<TaskRun[]>(
-        `/tasks/runs/recent${limit ? `?limit=${limit}` : ""}`
+        `/tasks/runs/recent${limit ? `?limit=${limit}` : ""}`,
       ),
   },
   backtest: {

@@ -1,15 +1,15 @@
 "use client";
 
 import {
-    CartesianGrid,
-    Legend,
-    Line,
-    LineChart,
-    ReferenceLine,
-    ResponsiveContainer,
-    Tooltip,
-    XAxis,
-    YAxis,
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from "recharts";
 
 interface PerformanceData {
@@ -17,6 +17,13 @@ interface PerformanceData {
   value: number;
   pnl: number;
 }
+
+// Helper to safely parse string values to numbers
+const safeParseFloat = (value: string | number): number => {
+  if (typeof value === "number") return value;
+  const parsed = parseFloat(value);
+  return isNaN(parsed) ? 0 : parsed;
+};
 
 interface PerformanceChartProps {
   data: PerformanceData[];
@@ -73,8 +80,8 @@ export function PerformanceChart({
         >
           <defs>
             <linearGradient id="valueGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8} />
-              <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.1} />
+              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1} />
             </linearGradient>
           </defs>
 
@@ -82,6 +89,7 @@ export function PerformanceChart({
             strokeDasharray="3 3"
             stroke="#374151"
             vertical={false}
+            opacity={0.3}
           />
 
           <XAxis
@@ -124,12 +132,14 @@ export function PerformanceChart({
 
           <Tooltip
             contentStyle={{
-              backgroundColor: "#1F2937",
+              backgroundColor: "#0b0f19",
               borderColor: "#374151",
-              borderRadius: "0.5rem",
+              borderRadius: "0.75rem",
               boxShadow:
                 "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+              border: "1px solid #374151",
             }}
+            labelStyle={{ color: "#e5e7eb" }}
             labelFormatter={(value) => {
               const date = new Date(value);
               return date.toLocaleDateString("en-US", {
@@ -141,10 +151,11 @@ export function PerformanceChart({
                 minute: "2-digit",
               });
             }}
-            formatter={(value: number, name: string) => {
+            formatter={(value: number | string, name: string) => {
+              const numValue = safeParseFloat(value);
               if (name === "value") {
                 return [
-                  `$${value.toLocaleString(undefined, {
+                  `$${numValue.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}`,
@@ -152,7 +163,7 @@ export function PerformanceChart({
                 ];
               }
               return [
-                `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`,
+                `${numValue >= 0 ? "+" : ""}${numValue.toFixed(2)}%`,
                 "24h Change",
               ];
             }}
@@ -164,7 +175,7 @@ export function PerformanceChart({
               yAxisId="left"
               stroke="#6B7280"
               strokeDasharray="3 3"
-              strokeOpacity={0.7}
+              strokeOpacity={0.5}
               label={{
                 value: "Start",
                 fill: "#9CA3AF",
@@ -191,14 +202,14 @@ export function PerformanceChart({
             yAxisId="left"
             type="monotone"
             dataKey="value"
-            stroke="#3B82F6"
+            stroke="#3b82f6"
             strokeWidth={2}
             dot={false}
             activeDot={{
               r: 6,
-              stroke: "#1D4ED8",
+              stroke: "#1d4ed8",
               strokeWidth: 2,
-              fill: "#3B82F6",
+              fill: "#3b82f6",
             }}
             name="Portfolio Value"
           />
@@ -208,7 +219,7 @@ export function PerformanceChart({
               yAxisId="right"
               type="monotone"
               dataKey="pnl"
-              stroke="#10B981"
+              stroke="#10b981"
               strokeWidth={2}
               dot={false}
               strokeDasharray="3 3"

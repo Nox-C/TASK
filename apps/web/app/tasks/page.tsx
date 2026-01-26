@@ -1,129 +1,204 @@
 "use client";
-import { Button, Card, Skeleton, StatusPill } from "@task/ui";
+
+import { Button, Card, KpiCard, Skeleton, StatusPill } from "@task/ui";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Api, Task, TaskRun } from "../lib/api";
+import { Api } from "../lib/api";
+
+interface Task {
+  id: string;
+  name: string;
+  triggers: TaskTrigger[];
+  actions: TaskAction[];
+  createdAt: string;
+  status?: "active" | "inactive" | "running";
+  lastRun?: string;
+  nextRun?: string;
+  runCount?: number;
+}
+
+interface TaskTrigger {
+  id?: string;
+  type: "cron" | "webhook";
+  config: any;
+}
+
+interface TaskAction {
+  id?: string;
+  type: "bot.start" | "bot.stop" | "notify";
+  config: any;
+}
+
+interface TaskRun {
+  id: string;
+  taskId: string;
+  status: "enqueued" | "running" | "completed" | "failed";
+  startedAt: string;
+  finishedAt?: string;
+  task?: {
+    id: string;
+    name: string;
+  };
+}
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [taskRuns, setTaskRuns] = useState<TaskRun[]>([]);
+  const [recentRuns, setRecentRuns] = useState<TaskRun[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [newTask, setNewTask] = useState({
-    name: "",
-    triggerType: "cron" as "cron" | "webhook",
-    cronSchedule: "",
-    webhookKey: "",
-    actionType: "notify" as "bot.start" | "bot.stop" | "notify",
-    botId: "",
-    message: "",
-    ownerId: "default-user", // Default owner for demo
-  });
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [tasksData, taskRunsData] = await Promise.all([
+        const [tasksData, runsData] = await Promise.all([
           Api.tasks.list(),
-          Api.tasks.recentRuns(20), // Fetch last 20 runs
+          Api.tasks.recentRuns(20),
         ]);
-        setTasks(tasksData);
-        setTaskRuns(taskRunsData);
-        setLoading(false);
+
+        // Enhance tasks with mock status and run data
+        const enhancedTasks = tasksData.map((task, index) => ({
+          ...task,
+          status: (Math.random() > 0.3 ? "active" : "inactive") as
+            | "active"
+            | "inactive"
+            | "running",
+          lastRun: new Date(
+            Date.now() - Math.random() * 86400000,
+          ).toISOString(),
+          nextRun: new Date(Date.now() + Math.random() * 3600000).toISOString(),
+          runCount: Math.floor(Math.random() * 100),
+        }));
+
+        setTasks(enhancedTasks);
+        setRecentRuns(runsData);
       } catch (error) {
-        // Log error for debugging in development
-        if (process.env.NODE_ENV === "development") {
-          console.error("Failed to fetch tasks:", error);
-        }
+        console.error("Failed to fetch tasks:", error);
+      } finally {
         setLoading(false);
       }
     };
 
     fetchData();
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
   }, []);
 
-  const handleCreateTask = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleRunTask = async (taskId: string) => {
     try {
-      const taskData = {
-        name: newTask.name,
-        ownerId: newTask.ownerId,
-        triggers: [
-          {
-            type: newTask.triggerType,
-            config:
-              newTask.triggerType === "cron"
-                ? { schedule: newTask.cronSchedule }
-                : { key: newTask.webhookKey },
-          },
-        ],
-        actions: [
-          {
-            type: newTask.actionType,
-            config:
-              newTask.actionType === "notify"
-                ? { message: newTask.message }
-                : { botId: newTask.botId },
-          },
-        ],
-      };
-
-      const created: any = await Api.tasks.create(taskData);
-      setTasks([...tasks, created]);
-      setNewTask({
-        name: "",
-        triggerType: "cron",
-        cronSchedule: "",
-        webhookKey: "",
-        actionType: "notify",
-        botId: "",
-        message: "",
-        ownerId: "default-user",
-      });
-      setShowCreateForm(false);
+      await Api.tasks.run(taskId);
+      // Refresh recent runs
+      const runsData = await Api.tasks.recentRuns(20);
+      setRecentRuns(runsData);
     } catch (error) {
-      // Log error for debugging in development
-      if (process.env.NODE_ENV === "development") {
-        console.error("Failed to create task:", error);
-      }
+      console.error("Failed to run task:", error);
+    }
+  };
+
+  const getStatusColor = (status?: string) => {
+    switch (status) {
+      case "active":
+        return "text-walle-green";
+      case "running":
+        return "text-walle-blue";
+      case "failed":
+        return "text-walle-orange";
+      case "inactive":
+        return "text-gray-400";
+      default:
+        return "text-gray-400";
+    }
+  };
+
+  const getStatusPill = (status?: string) => {
+    switch (status) {
+      case "active":
+        return "connected" as const;
+      case "running":
+        return "active" as const;
+      case "failed":
+        return "down" as const;
+      case "inactive":
+        return "disconnected" as const;
+      default:
+        return "disconnected" as const;
+    }
+  };
+
+  const formatTriggerDescription = (trigger: TaskTrigger) => {
+    if (trigger.type === "cron") {
+      return `Cron: ${trigger.config.schedule || "Daily"}`;
+    }
+    return `Webhook: ${trigger.config.url || "API Endpoint"}`;
+  };
+
+  const formatActionDescription = (action: TaskAction) => {
+    switch (action.type) {
+      case "bot.start":
+        return `Start bot: ${action.config.botId || "Bot ID"}`;
+      case "bot.stop":
+        return `Stop bot: ${action.config.botId || "Bot ID"}`;
+      case "notify":
+        return `Send notification: ${action.config.message || "Alert"}`;
+      default:
+        return `Action: ${action.type}`;
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white p-6">
+      <div className="min-h-screen bg-walle-darkblue-base text-white p-6">
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex justify-between items-center">
             <div>
               <div className="h-6 w-48 bg-gray-700 rounded mb-2" />
-              <div className="h-4 w-72 bg-gray-700 rounded" />
+              <div className="h-4 w-64 bg-gray-700 rounded" />
             </div>
             <div className="h-9 w-28 bg-gray-700 rounded" />
           </div>
-          <Card className="p-6">
-            <div className="h-5 w-40 bg-gray-700 rounded mb-4" />
-            <div className="space-y-4">
-              <Skeleton className="h-16" rounded="xl" />
-              <Skeleton className="h-16" rounded="xl" />
-              <Skeleton className="h-16" rounded="xl" />
-            </div>
-          </Card>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Skeleton className="h-28" rounded="xl" />
+            <Skeleton className="h-28" rounded="xl" />
+            <Skeleton className="h-28" rounded="xl" />
+            <Skeleton className="h-28" rounded="xl" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Skeleton className="h-64" rounded="xl" />
+            <Skeleton className="h-64" rounded="xl" />
+          </div>
         </div>
       </div>
     );
   }
 
+  const activeTasks = tasks.filter((task) => task.status === "active").length;
+  const totalRuns = recentRuns.length;
+  const successRate =
+    recentRuns.length > 0
+      ? (recentRuns.filter((run) => run.status === "completed").length /
+          recentRuns.length) *
+        100
+      : 0;
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
+    <div className="min-h-screen bg-walle-darkblue-base text-white p-6">
       <div className="max-w-7xl mx-auto">
+        {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold">TASK Studio</h1>
-            <p className="text-gray-400">Create and manage automation tasks</p>
+            <h1 className="text-3xl font-bold text-walle-yellow">
+              TASK Studio
+            </h1>
+            <p className="text-gray-400">
+              Create and manage automated trading workflows
+            </p>
           </div>
-          <div className="flex space-x-4">
-            <Button onClick={() => setShowCreateForm(true)} variant="primary">
-              Create Task
+          <div className="flex gap-3">
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              className="bg-walle-blue hover:bg-walle-blue-dark"
+            >
+              + Create Task
             </Button>
             <Link href="/">
               <Button variant="secondary">Back to Home</Button>
@@ -131,237 +206,174 @@ export default function TasksPage() {
           </div>
         </div>
 
-        {/* Create Task Form */}
-        {showCreateForm && (
-          <Card className="p-6 mb-8">
-            <h2 className="text-xl font-semibold mb-4">Create New Task</h2>
-            <form onSubmit={handleCreateTask} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Task Name
-                </label>
-                <input
-                  type="text"
-                  value={newTask.name}
-                  onChange={(e) =>
-                    setNewTask({ ...newTask, name: e.target.value })
-                  }
-                  className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
-                  placeholder="Enter task name"
-                  required
-                />
-              </div>
+        {/* Overview Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <KpiCard
+            title="Total Tasks"
+            value={tasks.length}
+            accent="blue"
+            hint="All configured tasks"
+          />
+          <KpiCard
+            title="Active Tasks"
+            value={activeTasks}
+            accent="green"
+            hint="Currently running"
+          />
+          <KpiCard
+            title="Total Runs"
+            value={totalRuns}
+            accent="yellow"
+            hint="All time executions"
+          />
+          <KpiCard
+            title="Success Rate"
+            value={`${successRate.toFixed(1)}%`}
+            accent="cyan"
+            hint="Last 24h"
+          />
+        </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Trigger Type
-                  </label>
-                  <select
-                    value={newTask.triggerType}
-                    onChange={(e) =>
-                      setNewTask({
-                        ...newTask,
-                        triggerType: e.target.value as "cron" | "webhook",
-                      })
-                    }
-                    className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
-                  >
-                    <option value="cron">Cron Schedule</option>
-                    <option value="webhook">Webhook Alert</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Action Type
-                  </label>
-                  <select
-                    value={newTask.actionType}
-                    onChange={(e) =>
-                      setNewTask({
-                        ...newTask,
-                        actionType: e.target.value as any,
-                      })
-                    }
-                    className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
-                  >
-                    <option value="notify">Send Notification</option>
-                    <option value="bot.start">Start Bot</option>
-                    <option value="bot.stop">Stop Bot</option>
-                  </select>
-                </div>
-              </div>
-
-              {newTask.triggerType === "cron" ? (
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Cron Schedule
-                  </label>
-                  <input
-                    type="text"
-                    value={newTask.cronSchedule}
-                    onChange={(e) =>
-                      setNewTask({ ...newTask, cronSchedule: e.target.value })
-                    }
-                    className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
-                    placeholder="0 */1 * * * (every hour)"
-                    required
-                  />
-                  <p className="text-xs text-gray-400 mt-1">
-                    Format: minute hour day month weekday
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Webhook Key
-                  </label>
-                  <input
-                    type="text"
-                    value={newTask.webhookKey}
-                    onChange={(e) =>
-                      setNewTask({ ...newTask, webhookKey: e.target.value })
-                    }
-                    className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
-                    placeholder="unique-webhook-key"
-                    required
-                  />
-                </div>
-              )}
-
-              {newTask.actionType === "notify" ? (
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Message
-                  </label>
-                  <input
-                    type="text"
-                    value={newTask.message}
-                    onChange={(e) =>
-                      setNewTask({ ...newTask, message: e.target.value })
-                    }
-                    className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
-                    placeholder="Notification message"
-                    required
-                  />
-                </div>
-              ) : (
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Bot ID
-                  </label>
-                  <input
-                    type="text"
-                    value={newTask.botId}
-                    onChange={(e) =>
-                      setNewTask({ ...newTask, botId: e.target.value })
-                    }
-                    className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
-                    placeholder="Bot ID to control"
-                    required
-                  />
-                </div>
-              )}
-
-              <div className="flex space-x-4">
-                <Button type="submit" variant="primary">
-                  Create Task
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setShowCreateForm(false)}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </Card>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Tasks List */}
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">
-              Your Tasks ({tasks.length})
-            </h2>
-            {tasks.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
-                <p>No tasks created yet</p>
-                <Button
-                  onClick={() => setShowCreateForm(true)}
-                  className="mt-4"
-                  variant="primary"
-                >
-                  Create Your First Task
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Task List */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="bg-walle-surface rounded-lg p-6 border border-walle-blue/20">
+              <h2 className="text-xl font-semibold mb-4 text-walle-yellow">
+                Automation Tasks
+              </h2>
+              <div className="space-y-3">
                 {tasks.map((task) => (
-                  <div key={task.id} className="p-4 bg-gray-700 rounded-lg">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold">{task.name}</h3>
-                      <Button variant="ghost" size="sm">
-                        Edit
-                      </Button>
+                  <Card
+                    key={task.id}
+                    className="p-4 bg-gray-800/50 border border-gray-700/50"
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="font-semibold text-white">
+                            {task.name}
+                          </h3>
+                          <StatusPill status={getStatusPill(task.status)} />
+                        </div>
+                        <div className="space-y-2">
+                          <div className="text-sm">
+                            <span className="text-gray-500">Triggers:</span>
+                            <div className="ml-2">
+                              {task.triggers.map((trigger, index) => (
+                                <div key={index} className="text-walle-blue">
+                                  {formatTriggerDescription(trigger)}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="text-sm">
+                            <span className="text-gray-500">Actions:</span>
+                            <div className="ml-2">
+                              {task.actions.map((action, index) => (
+                                <div key={index} className="text-walle-yellow">
+                                  {formatActionDescription(action)}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => handleRunTask(task.id)}
+                          className="bg-walle-green hover:bg-green-600"
+                          size="sm"
+                          disabled={task.status === "running"}
+                        >
+                          Run Now
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => setSelectedTask(task)}
+                        >
+                          Configure
+                        </Button>
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-400 space-y-1">
-                      <div>
-                        Trigger: {task.triggers[0]?.type || "None"}
-                        {task.triggers[0]?.type === "cron" && (
-                          <span className="ml-2 text-yellow-400">
-                            {task.triggers[0].config.schedule}
-                          </span>
-                        )}
+                    <div className="text-xs text-gray-500 border-t border-gray-700 pt-2">
+                      Created: {new Date(task.createdAt).toLocaleDateString()}
+                      {task.runCount && ` • Runs: ${task.runCount}`}
+                      {task.lastRun &&
+                        ` • Last run: ${new Date(task.lastRun).toLocaleString()}`}
+                    </div>
+                  </Card>
+                ))}
+                {tasks.length === 0 && (
+                  <div className="text-center py-8 text-gray-400">
+                    <p>No automation tasks configured yet</p>
+                    <Button
+                      onClick={() => setShowCreateModal(true)}
+                      className="mt-4 bg-walle-blue hover:bg-walle-blue-dark"
+                    >
+                      Create Your First Task
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Runs & Quick Actions */}
+          <div className="space-y-6">
+            {/* Recent Runs */}
+            <div className="bg-walle-surface rounded-lg p-6 border border-walle-blue/20">
+              <h2 className="text-xl font-semibold mb-4 text-walle-yellow">
+                Recent Runs
+              </h2>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {recentRuns.slice(0, 10).map((run) => (
+                  <div
+                    key={run.id}
+                    className="p-3 bg-gray-800/50 rounded border border-gray-700/50"
+                  >
+                    <div className="flex justify-between items-center mb-1">
+                      <div className="font-medium text-white text-sm">
+                        {run.task?.name || "Unknown Task"}
                       </div>
-                      <div>Action: {task.actions[0]?.type || "None"}</div>
-                      <div>
-                        Created: {new Date(task.createdAt).toLocaleDateString()}
-                      </div>
+                      <StatusPill status={getStatusPill(run.status)} />
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Started: {new Date(run.startedAt).toLocaleString()}
+                      {run.finishedAt &&
+                        ` • Finished: ${new Date(run.finishedAt).toLocaleString()}`}
                     </div>
                   </div>
                 ))}
+                {recentRuns.length === 0 && (
+                  <div className="text-center py-4 text-gray-400">
+                    <p>No recent runs</p>
+                  </div>
+                )}
               </div>
-            )}
-          </Card>
-
-          {/* Task Run History */}
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Run History</h2>
-            <div className="space-y-3">
-              {taskRuns.map((run) => (
-                <div key={run.id} className="p-3 bg-gray-700 rounded">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-medium">Task Run</span>
-                    <StatusPill
-                      status={
-                        (run.status === "completed"
-                          ? "active"
-                          : run.status === "failed"
-                          ? "down"
-                          : "degraded") as any
-                      }
-                    />
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    Started: {new Date(run.startedAt).toLocaleString()}
-                    {run.finishedAt && (
-                      <div>
-                        Finished: {new Date(run.finishedAt).toLocaleString()}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {taskRuns.length === 0 && (
-                <div className="text-center py-8 text-gray-400">
-                  <p>No task runs yet</p>
-                </div>
-              )}
             </div>
-          </Card>
+
+            {/* Quick Actions */}
+            <div className="bg-walle-surface rounded-lg p-6 border border-walle-blue/20">
+              <h2 className="text-xl font-semibold mb-4 text-walle-yellow">
+                Quick Actions
+              </h2>
+              <div className="space-y-3">
+                <Button className="w-full bg-walle-green hover:bg-green-600">
+                  Run All Active Tasks
+                </Button>
+                <Button variant="secondary" className="w-full">
+                  Pause All Tasks
+                </Button>
+                <Button variant="secondary" className="w-full">
+                  View Task Logs
+                </Button>
+                <Button variant="secondary" className="w-full">
+                  Export Task Report
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

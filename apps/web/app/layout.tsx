@@ -18,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className="min-h-screen antialiased bg-gray-900 text-white">
+      <body className="min-h-screen antialiased bg-walle-darkblue-base text-white">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

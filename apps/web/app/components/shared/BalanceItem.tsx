@@ -3,7 +3,7 @@
 interface Balance {
   id: string;
   asset: string;
-  amount: number;
+  amount: number | string;
   accountId: string;
 }
 
@@ -22,8 +22,11 @@ interface BalanceItemProps {
 }
 
 export const BalanceItem = ({ balance }: BalanceItemProps) => {
-  const assetValueUSD =
-    balance.asset === "USD" ? balance.amount : balance.amount * 1000; // Mock calculation retained
+  const amount =
+    typeof balance.amount === "string"
+      ? parseFloat(balance.amount)
+      : balance.amount;
+  const assetValueUSD = balance.asset === "USD" ? amount : amount * 1000; // Mock calculation retained
 
   return (
     <div
@@ -46,7 +49,7 @@ export const BalanceItem = ({ balance }: BalanceItemProps) => {
       <div className="text-right">
         <div className="font-semibold text-yellow-400">
           {balance.amount.toLocaleString(undefined, {
-            maximumFractionDigits: balance.amount < 1 ? 8 : 4,
+            maximumFractionDigits: amount < 1 ? 8 : 4,
           })}{" "}
           {balance.asset}
         </div>

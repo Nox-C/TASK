@@ -60,33 +60,39 @@ export default function PortfolioPage() {
 
         // Mock balances and positions for now
         setBalances([
-          { id: '1', asset: 'USD', amount: 10000, accountId: 'paper-account' },
-          { id: '2', asset: 'BTC', amount: 0.5, accountId: 'paper-account' },
-          { id: '3', asset: 'ETH', amount: 2.5, accountId: 'paper-account' }
+          { id: "1", asset: "USD", amount: 10000, accountId: "paper-account" },
+          { id: "2", asset: "BTC", amount: 0.5, accountId: "paper-account" },
+          { id: "3", asset: "ETH", amount: 2.5, accountId: "paper-account" },
         ]);
 
         setPositions([
           {
-            id: '1',
-            symbol: 'BTC-USD',
+            id: "1",
+            symbol: "BTC-USD",
             qty: 0.5,
             avgPrice: 42000,
             currentPrice: 45000,
             unrealizedPnL: 1500,
-            accountId: 'paper-account'
+            accountId: "paper-account",
           },
           {
-            id: '2',
-            symbol: 'ETH-USD',
+            id: "2",
+            symbol: "ETH-USD",
             qty: 2.5,
             avgPrice: 3000,
             currentPrice: 3200,
             unrealizedPnL: 500,
-            accountId: 'paper-account'
-          }
+            accountId: "paper-account",
+          },
         ]);
 
         setPnlSnapshots(pnlData as PnLSnapshot[]);
+
+        setLoading(false);
+      } catch (error) {
+        console.error("Failed to fetch portfolio data:", error);
+        setLoading(false);
+      }
     };
 
     fetchPortfolioData();

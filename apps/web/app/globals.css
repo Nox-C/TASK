@@ -4,6 +4,15 @@
 
 :root {
   --radius: 0.75rem;
+  /* WALL-E Theme Variables */
+  --walle-darkblue-base: #0b0f19;
+  --walle-darkblue-surface: #111827;
+  --walle-blue: #3b82f6;
+  --walle-blue-dark: #1d4ed8;
+  --walle-green: #10b981;
+  --walle-yellow: #fbbf24;
+  --walle-orange: #f97316;
+  --walle-brown: #92400e;
 }
 
 html,
@@ -12,7 +21,7 @@ body {
 }
 
 body {
-  background-color: #0b0f19;
+  background-color: var(--walle-darkblue-base);
   color: #e5e7eb;
 }
 
@@ -20,8 +29,35 @@ body {
   @apply bg-gray-800/80 backdrop-blur rounded-xl border border-gray-700 shadow-elevated;
 }
 
+.bg-walle-surface {
+  background-color: var(--walle-darkblue-surface);
+}
+
+.bg-walle-card {
+  background-color: rgba(31, 41, 55, 0.8);
+  backdrop-filter: blur(8px);
+}
+
+.border-walle-blue/20 {
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
 .kpi {
   @apply p-6 rounded-xl border border-gray-700 bg-gradient-to-br from-gray-800 to-gray-700 shadow-elevated;
+}
+
+.kpi-enhanced {
+  @apply p-6 rounded-xl border border-walle-blue/20 bg-gradient-to-br from-gray-800 to-gray-700 shadow-elevated;
+  background: linear-gradient(
+    135deg,
+    rgba(31, 41, 55, 0.9) 0%,
+    rgba(17, 24, 39, 0.9) 100%
+  );
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(59, 130, 246, 0.1);
 }
 
 .status-pill {

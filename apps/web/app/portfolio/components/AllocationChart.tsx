@@ -12,16 +12,16 @@ import {
 } from "recharts";
 
 const COLORS = [
-  "#3B82F6", // blue-500
-  "#10B981", // emerald-500
-  "#F59E0B", // amber-500
-  "#EF4444", // red-500
-  "#8B5CF6", // violet-500
-  "#EC4899", // pink-500
+  "#3b82f6", // walle-blue
+  "#10b981", // walle-green
+  "#fbbf24", // walle-yellow
+  "#f97316", // walle-orange
+  "#92400e", // walle-brown
+  "#8b5cf6", // violet-500
 ];
 
 interface AllocationData {
-  [key: string]: string | number | undefined;  // Index signature for compatibility with ChartDataInput
+  [key: string]: string | number | undefined; // Index signature for compatibility with ChartDataInput
   name: string;
   value: number;
   color?: string;
@@ -105,7 +105,7 @@ export function AllocationChart({
               <Cell
                 key={`cell-${index}`}
                 fill={entry.color || COLORS[index % COLORS.length]}
-                stroke="#1F2937"
+                stroke="#0b0f19"
                 strokeWidth={activeIndex === index ? 2 : 1}
                 style={{
                   filter:
@@ -134,11 +134,12 @@ export function AllocationChart({
                 ];
               }}
               contentStyle={{
-                backgroundColor: "#1F2937",
+                backgroundColor: "#0b0f19",
                 borderColor: "#374151",
-                borderRadius: "0.5rem",
+                borderRadius: "0.75rem",
                 boxShadow:
                   "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                border: "1px solid #374151",
               }}
             />
           )}
@@ -197,9 +198,9 @@ export function AllocationSummary({ data }: { data: AllocationData[] }) {
                 })}
               </span>
             </div>
-            <div className="w-full bg-gray-700 rounded-full h-2">
+            <div className="w-full bg-gray-700/50 rounded-full h-2">
               <div
-                className="h-2 rounded-full transition-all duration-300"
+                className="h-2 rounded-full transition-all duration-300 shadow-elevated"
                 style={{
                   width: `${percentage}%`,
                   backgroundColor: item.color || COLORS[index % COLORS.length],
@@ -210,7 +211,7 @@ export function AllocationSummary({ data }: { data: AllocationData[] }) {
               <span>{percentage.toFixed(1)}%</span>
               <span>
                 {percentage > 0 && (
-                  <span className="text-green-400">
+                  <span className="text-walle-green">
                     +{percentage.toFixed(1)}%
                   </span>
                 )}

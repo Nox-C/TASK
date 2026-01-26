@@ -7,23 +7,27 @@ The TASK Control Panel is a comprehensive trading bot creation and management st
 ## Core Components
 
 ### 1. Authentication & User Management
+
 - JWT-based authentication system
 - User sessions with expiration
 - Role-based access control (future)
 
 ### 2. Trading Bot Management
+
 - Create, configure, and manage trading bots
 - Real-time bot status monitoring
 - Start/stop bot operations
 - Strategy assignment and configuration
 
 ### 3. Portfolio & Order Management
+
 - Real-time portfolio tracking
 - Order placement and management
 - P&L calculations (realized/unrealized)
 - Balance and position monitoring
 
 ### 4. Task Automation (TASK)
+
 - Fully automated and manuel stratagies with backtesting
 - Cron scheduling support
 - Webhook triggers
@@ -31,12 +35,14 @@ The TASK Control Panel is a comprehensive trading bot creation and management st
 - Notification system
 
 ### 5. Backtesting Engine
+
 - Historical data replay
 - Strategy performance analysis
 - Risk metrics calculation
 - Report generation
 
 ### 6. Market Data
+
 - Real-time price feeds
 - Historical data storage
 - Multiple venue support dex and cex
@@ -46,6 +52,7 @@ The TASK Control Panel is a comprehensive trading bot creation and management st
 ## Technical Architecture
 
 ### Backend (NestJS)
+
 - Modular architecture with feature modules
 - PostgreSQL database with Prisma ORM
 - WebSocket support for real-time updates
@@ -53,6 +60,7 @@ The TASK Control Panel is a comprehensive trading bot creation and management st
 - Comprehensive API with validation
 
 ### Frontend (Next.js)
+
 - Server-side rendering
 - Real-time UI updates via WebSocket
 - Responsive design with Tailwind CSS
@@ -60,6 +68,7 @@ The TASK Control Panel is a comprehensive trading bot creation and management st
 - State management with Zustand
 
 ### Database Schema
+
 - Users, Sessions, Bots, Strategies
 - Orders, Positions, Balances, Accounts
 - Tasks, Triggers, Actions, Runs
@@ -67,6 +76,7 @@ The TASK Control Panel is a comprehensive trading bot creation and management st
 - Price ticks and market data
 
 ### Infrastructure
+
 - Docker containerization
 - PostgreSQL database
 - Background job processing
@@ -75,6 +85,7 @@ The TASK Control Panel is a comprehensive trading bot creation and management st
 ## Key Features
 
 ### MVP Features (Implemented)
+
 ✅ User authentication and sessions
 ✅ Bot creation and management
 ✅ Order placement and tracking
@@ -86,6 +97,7 @@ The TASK Control Panel is a comprehensive trading bot creation and management st
 ✅ System health monitoring
 
 ### Future Enhancements
+
 - Multi-venue trading support
 - Advanced charting and analytics
 - Machine learning integration
@@ -98,6 +110,7 @@ The TASK Control Panel is a comprehensive trading bot creation and management st
 ## API Specification
 
 ### Core Endpoints
+
 - Authentication: `/auth/*`
 - Bots: `/bots/*`
 - Orders: `/orders/*`
@@ -107,6 +120,7 @@ The TASK Control Panel is a comprehensive trading bot creation and management st
 - Market Data: `/market/*`
 
 ### WebSocket Events
+
 - Bot status updates
 - Order fills
 - Portfolio changes

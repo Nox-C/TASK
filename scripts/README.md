@@ -5,6 +5,7 @@ Helper scripts for setting up and managing the TASK Control Panel in production.
 ## Available Scripts
 
 ### verify-prerequisites.sh
+
 Verifies that all required tools and permissions are correctly configured.
 
 ```bash
@@ -12,6 +13,7 @@ Verifies that all required tools and permissions are correctly configured.
 ```
 
 **Checks:**
+
 - Docker
 - Docker Compose
 - pnpm
@@ -22,6 +24,7 @@ Verifies that all required tools and permissions are correctly configured.
 - Docker group membership
 
 ### setup-database.sh
+
 Sets up the PostgreSQL database and runs migrations.
 
 ```bash
@@ -29,6 +32,7 @@ Sets up the PostgreSQL database and runs migrations.
 ```
 
 **Steps:**
+
 1. Starts PostgreSQL container
 2. Waits for database to be ready
 3. Runs Prisma migrations
