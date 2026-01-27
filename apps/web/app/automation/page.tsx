@@ -58,9 +58,10 @@ export default function AutomationPage() {
     <div className="min-h-screen p-8 bg-walle-darkblue">
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold text-walle-yellow">
-          🤖 WALL-E Trading Control Panel
-        </h1>
+        <div className="flex items-center gap-4">
+          <img src="/wall-e-icon.png" alt="WALL-E" className="w-12 h-12" />
+          <h1 className="text-4xl font-bold text-walle-yellow">WALL-E Trading Control Panel</h1>
+        </div>
         <div className="flex gap-4">
           <button
             onClick={() => setShowCreateModal(true)}
