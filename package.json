@@ -12,7 +12,7 @@
     "db:studio": "cd packages/database && pnpm db:studio"
   },
   "devDependencies": {
-    "turbo": "^1.10.0",
-    "typescript": "^5.2.0"
+    "turbo": "^2.7.6",
+    "typescript": "^5.9.3"
   }
 }
