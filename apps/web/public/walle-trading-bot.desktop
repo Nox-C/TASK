@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=WALL-E Trading Bot
+Comment=WALL-E themed trading bot control panel
+Exec=firefox http://localhost:3001/automation
+Icon=wall-e-icon.png
+Terminal=false
+Categories=Office;Finance;
+Keywords=trading;bot;crypto;wall-e;
+StartupNotify=true

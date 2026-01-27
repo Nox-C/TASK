@@ -1,0 +1,21 @@
+{
+  "name": "WALL-E Trading Bot",
+  "short_name": "WALL-E Bot",
+  "description": "WALL-E themed trading bot control panel",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0D1B2A",
+  "theme_color": "#FFB800",
+  "icons": [
+    {
+      "src": "/wall-e-icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/wall-e-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
