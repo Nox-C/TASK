@@ -1,34 +1,18 @@
 {
-  "name": "task-control-panel",
+  "name": "task-trading-bot",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.0.0",
-  "license": "MIT",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "scripts": {
-    "dev:web": "turbo run dev --filter=web",
-    "dev:api": "turbo run dev --filter=api",
-    "dev:worker": "turbo run dev --filter=worker",
+    "dev": "turbo run dev --parallel",
+    "dev:web": "cd apps/web && pnpm dev",
+    "dev:api": "cd apps/api && pnpm dev",
+    "dev:worker": "cd apps/worker && pnpm dev",
     "build": "turbo run build",
-    "start": "turbo run start --filter=api --filter=web",
-    "lint": "eslint . --ext .ts,.tsx",
-    "format": "prettier --write ."
+    "db:push": "cd packages/database && pnpm db:push",
+    "db:studio": "cd packages/database && pnpm db:studio"
   },
   "devDependencies": {
-    "@types/node": "^20.19.29",
-    "turbo": "^2.7.5",
-    "typescript": "^5.9.3"
-  },
-  "dependencies": {
-    "decimal.js": "^10.6.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "ox": "0.11.3",
-      "zod": "3.23.8"
-    }
-  },
-  "packageManager": "pnpm@10.15.0+sha512.486ebc259d3e999a4e8691ce03b5cac4a71cbeca39372a9b762cb500cfdf0873e2cb16abe3d951b1ee2cf012503f027b98b6584e4df22524e0c7450d9ec7aa7b"
+    "turbo": "^1.10.0",
+    "typescript": "^5.2.0"
+  }
 }

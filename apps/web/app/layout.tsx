@@ -1,15 +1,4 @@
-export const metadata = {
-  title: "TASK Control Panel",
-  description: "Advanced Trading Automation Dashboard",
-  icons: {
-    icon: "/wall-e-icon.png",
-    shortcut: "/wall-e-icon.png",
-    apple: "/wall-e-icon.png",
-  },
-};
-
-import { AuthProvider } from "./auth/context";
-import "./globals.css";
+import './globals.css';
 
 export default function RootLayout({
   children,
@@ -17,10 +6,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="min-h-screen antialiased bg-walle-darkblue-base text-white">
-        <AuthProvider>{children}</AuthProvider>
-      </body>
+    <html lang="en">
+      <body>{children}</body>
     </html>
   );
 }

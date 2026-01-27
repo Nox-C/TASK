@@ -1,15 +1,3 @@
 packages:
-  - apps/*
-  - packages/*
-
-onlyBuiltDependencies:
-  - '@nestjs/core'
-  - '@prisma/client'
-  - '@prisma/engines'
-  - bcrypt
-  - bufferutil
-  - esbuild
-  - keccak
-  - prisma
-  - sharp
-  - utf-8-validate
+  - 'apps/*'
+  - 'packages/*'

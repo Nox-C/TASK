@@ -1,18 +1,33 @@
-node_modules
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+
+# Environment files
 .env
 .env.local
-.env.*.local
-dist
-coverage
-.DS_Store
+.env.production
 
-# Next.js
-.next/
-out/
+# Database
+*.db
+*.sqlite
 
-# Turbo
-.turbo/
-
-# Build artifacts
+# Logs
+logs/
 *.log
-*.pack.gz
+
+# Cache
+.turbo/
+.cache/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

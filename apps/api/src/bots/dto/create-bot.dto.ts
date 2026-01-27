@@ -1,14 +1,29 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsString, IsNumber, IsEnum, IsOptional } from 'class-validator';
+import { BotStatus } from '@task/database';
 
 export class CreateBotDto {
   @IsString()
-  @IsNotEmpty()
-  name!: string;
+  name: string;
 
   @IsString()
-  @IsNotEmpty()
-  strategyId!: string;
+  strategy: string;
+
+  @IsString()
+  exchange: string;
+
+  @IsString()
+  tradingPair: string;
+
+  @IsNumber()
+  positionSize: number;
+
+  @IsNumber()
+  stopLoss: number;
+
+  @IsNumber()
+  takeProfit: number;
 
   @IsOptional()
-  active?: boolean;
+  @IsEnum(BotStatus)
+  status?: BotStatus;
 }

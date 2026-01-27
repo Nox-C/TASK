@@ -1,14 +1,4 @@
-import { IsOptional, IsString } from 'class-validator';
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateBotDto } from './create-bot.dto';
 
-export class UpdateBotDto {
-  @IsOptional()
-  @IsString()
-  name?: string;
-
-  @IsOptional()
-  @IsString()
-  strategyId?: string;
-
-  @IsOptional()
-  active?: boolean;
-}
+export class UpdateBotDto extends PartialType(CreateBotDto) {}

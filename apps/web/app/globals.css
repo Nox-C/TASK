@@ -3,125 +3,13 @@
 @tailwind utilities;
 
 :root {
-  --radius: 0.75rem;
-  /* WALL-E Theme Variables */
-  --walle-darkblue-base: #0b0f19;
-  --walle-darkblue-surface: #111827;
-  --walle-blue: #3b82f6;
-  --walle-blue-dark: #1d4ed8;
-  --walle-green: #10b981;
-  --walle-yellow: #fbbf24;
-  --walle-orange: #f97316;
-  --walle-brown: #92400e;
-}
-
-html,
-body {
-  height: 100%;
+  --walle-yellow: #FFB800;
+  --walle-darkblue: #0D1B2A;
+  --walle-surface: #1B2838;
 }
 
 body {
-  background-color: var(--walle-darkblue-base);
-  color: #e5e7eb;
-}
-
-.card {
-  @apply bg-gray-800/80 backdrop-blur rounded-xl border border-gray-700 shadow-elevated;
-}
-
-.bg-walle-surface {
-  background-color: var(--walle-darkblue-surface);
-}
-
-.bg-walle-card {
-  background-color: rgba(31, 41, 55, 0.8);
-  backdrop-filter: blur(8px);
-}
-
-.border-walle-blue/20 {
-  border-color: rgba(59, 130, 246, 0.2);
-}
-
-.kpi {
-  @apply p-6 rounded-xl border border-gray-700 bg-gradient-to-br from-gray-800 to-gray-700 shadow-elevated;
-}
-
-.kpi-enhanced {
-  @apply p-6 rounded-xl border border-walle-blue/20 bg-gradient-to-br from-gray-800 to-gray-700 shadow-elevated;
-  background: linear-gradient(
-    135deg,
-    rgba(31, 41, 55, 0.9) 0%,
-    rgba(17, 24, 39, 0.9) 100%
-  );
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06),
-    0 0 0 1px rgba(59, 130, 246, 0.1);
-}
-
-.status-pill {
-  @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium;
-}
-.status-pill.healthy {
-  @apply bg-green-500/20 text-green-400 border border-green-600/30;
-}
-.status-pill.degraded {
-  @apply bg-yellow-500/20 text-yellow-300 border border-yellow-600/30;
-}
-.status-pill.down {
-  @apply bg-red-500/20 text-red-400 border border-red-600/30;
-}
-.status-pill.connected {
-  @apply bg-green-500/20 text-green-400 border border-green-600/30;
-}
-.status-pill.disconnected {
-  @apply bg-red-500/20 text-red-400 border border-red-600/30;
-}
-
-/* WALL-E custom colors */
-.bg-walle-yellow {
-  background-color: #fbbf24;
-}
-.bg-walle-orange {
-  background-color: #f97316;
-}
-.bg-walle-brown {
-  background-color: #92400e;
-}
-.bg-walle-blue {
-  background-color: #3b82f6;
-}
-.bg-walle-green {
-  background-color: #10b981;
-}
-.text-walle-yellow {
-  color: #fbbf24;
-}
-.text-walle-orange {
-  color: #f97316;
-}
-.text-walle-brown {
-  color: #92400e;
-}
-.text-walle-blue {
-  color: #3b82f6;
-}
-.text-walle-green {
-  color: #10b981;
-}
-.border-walle-yellow {
-  border-color: #fbbf24;
-}
-.border-walle-orange {
-  border-color: #f97316;
-}
-.border-walle-brown {
-  border-color: #92400e;
-}
-.border-walle-blue {
-  border-color: #3b82f6;
-}
-.border-walle-green {
-  border-color: #10b981;
+  background: var(--walle-darkblue);
+  color: white;
+  font-family: 'Inter', sans-serif;
 }
