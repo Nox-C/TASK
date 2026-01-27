@@ -7,7 +7,7 @@ export function KPICards({ metrics }: any) {
             <p className="text-gray-400 text-sm">Total Bots</p>
             <p className="text-3xl font-bold text-walle-yellow">{metrics.totalBots}</p>
           </div>
-          <span className="text-4xl">🤖</span>
+          <img src="/wall-e-icon.png" alt="WALL-E" className="w-12 h-12" />
         </div>
       </div>
 
@@ -17,7 +17,7 @@ export function KPICards({ metrics }: any) {
             <p className="text-gray-400 text-sm">Active Bots</p>
             <p className="text-3xl font-bold text-green-500">{metrics.activeBots}</p>
           </div>
-          <span className="text-4xl">⚡</span>
+          <img src="/wall-e-icon.png" alt="WALL-E Active" className="w-12 h-12" />
         </div>
       </div>
 
@@ -29,7 +29,7 @@ export function KPICards({ metrics }: any) {
               ${metrics.totalPnl.toFixed(2)}
             </p>
           </div>
-          <span className="text-4xl">💰</span>
+          <img src="/wall-e-icon.png" alt="WALL-E Trading" className="w-12 h-12" />
         </div>
       </div>
 
@@ -39,7 +39,7 @@ export function KPICards({ metrics }: any) {
             <p className="text-gray-400 text-sm">Win Rate</p>
             <p className="text-3xl font-bold text-walle-yellow">{metrics.winRate}%</p>
           </div>
-          <span className="text-4xl">📊</span>
+          <img src="/wall-e-icon.png" alt="WALL-E Analytics" className="w-12 h-12" />
         </div>
       </div>
     </div>
