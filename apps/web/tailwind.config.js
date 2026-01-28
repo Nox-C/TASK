@@ -10,8 +10,9 @@ module.exports = {
         walle: {
           yellow: '#FFB800',
           darkblue: '#0D1B2A',
-          lightblue: '#4A7BA7',
+          lightblue: '#4A90E2',
           surface: '#1B2838',
+          orange: '#FF6B35',
         },
       },
     },

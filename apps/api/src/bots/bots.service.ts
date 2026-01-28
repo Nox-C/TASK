@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { prisma, BotStatus } from '@task/database';
+import { BotStatus, prisma } from '@task/database';
 import { CreateBotDto } from './dto/create-bot.dto';
 import { UpdateBotDto } from './dto/update-bot.dto';
 
@@ -13,8 +13,8 @@ export class BotsService {
 
   async getMetrics() {
     const bots = await prisma.bot.findMany();
-    const activeBots = bots.filter(b => b.status === BotStatus.RUNNING);
-    const totalPnl = bots.reduce((sum, b) => sum + Number(b.totalPnl), 0);
+    const activeBots = bots.filter((b: any) => b.status === BotStatus.RUNNING);
+    const totalPnl = bots.reduce((sum: number, b: any) => sum + Number(b.totalPnl), 0);
     
     return {
       totalBots: bots.length,

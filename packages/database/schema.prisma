@@ -3,23 +3,23 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 model Bot {
-  id            Int       @id @default(autoincrement())
+  id            Int      @id @default(autoincrement())
   name          String
   strategy      String
   exchange      String
-  tradingPair   String    @map("trading_pair")
-  status        BotStatus @default(STOPPED)
-  positionSize  Decimal   @map("position_size") @db.Decimal(10, 2)
-  stopLoss      Decimal   @map("stop_loss") @db.Decimal(5, 2)
-  takeProfit    Decimal   @map("take_profit") @db.Decimal(5, 2)
-  totalPnl      Decimal   @default(0) @map("total_pnl") @db.Decimal(12, 2)
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  tradingPair   String   @map("trading_pair")
+  status        String   @default("STOPPED")
+  positionSize  Float    @map("position_size")
+  stopLoss      Float    @map("stop_loss")
+  takeProfit    Float    @map("take_profit")
+  totalPnl      Float    @default(0) @map("total_pnl")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
   
   orders        Order[]
   pnlHistory    PnlSnapshot[]
@@ -37,17 +37,17 @@ model Strategy {
 }
 
 model Order {
-  id        Int         @id @default(autoincrement())
-  botId     Int         @map("bot_id")
+  id        Int      @id @default(autoincrement())
+  botId     Int      @map("bot_id")
   symbol    String
-  side      OrderSide
-  type      OrderType
-  price     Decimal     @db.Decimal(12, 6)
-  quantity  Decimal     @db.Decimal(12, 6)
-  status    OrderStatus @default(PENDING)
-  createdAt DateTime    @default(now()) @map("created_at")
+  side      String
+  type      String
+  price     Float
+  quantity  Float
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now()) @map("created_at")
   
-  bot       Bot         @relation(fields: [botId], references: [id], onDelete: Cascade)
+  bot       Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
 
   @@map("orders")
 }
@@ -55,34 +55,10 @@ model Order {
 model PnlSnapshot {
   id        Int      @id @default(autoincrement())
   botId     Int      @map("bot_id")
-  pnl       Decimal  @db.Decimal(12, 2)
+  pnl       Float
   timestamp DateTime @default(now())
   
   bot       Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
 
   @@map("pnl_snapshots")
-}
-
-enum BotStatus {
-  STOPPED
-  RUNNING
-  PAUSED
-  ERROR
-}
-
-enum OrderSide {
-  BUY
-  SELL
-}
-
-enum OrderType {
-  MARKET
-  LIMIT
-}
-
-enum OrderStatus {
-  PENDING
-  FILLED
-  CANCELLED
-  REJECTED
 }
