@@ -34,8 +34,8 @@ git push origin main
 Render will prompt for these values during first deploy:
 
 ```env
-NEXT_PUBLIC_API_URL=https://eve-trading-system.onrender.com
-NEXT_PUBLIC_WS_URL=wss://eve-trading-system.onrender.com
+NEXT_PUBLIC_API_URL=https://task.onrender.com
+NEXT_PUBLIC_WS_URL=wss://task.onrender.com
 NEXT_PUBLIC_WS_ENDPOINT=wss://stream.binance.com:9443/ws
 ```
 

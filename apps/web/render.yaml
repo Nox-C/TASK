@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: eve-trading-system
+    name: task
     plan: free # Use the free tier
     region: oregon # Choose closest to your target users
     runtime: node

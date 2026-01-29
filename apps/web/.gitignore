@@ -69,6 +69,3 @@ build/
 *.pem
 *.key
 *.crt
-
-# Render specific
-render.yaml
