@@ -1,63 +1,36 @@
 'use client';
 
-import { useState } from 'react';
-import { useActiveBot } from '../../../shared/context/ActiveBotContext';
-import { usePrice } from '../../../shared/hooks/usePrice';
+import { useEffect, useState } from 'react';
+import { EVEIcon } from '../../../shared/components/EVEIcon';
+import { useActiveBot, useTradeStore } from '../../../shared/store/useTradeStore';
 import { GridBot } from '../../../shared/types/trading';
+import { botApi } from '../services/botApi';
 
 export function BotList() {
-  const { activeBot, setActiveBot, getBacktestResults } = useActiveBot();
+  const activeBot = useActiveBot();
+  const { setActiveBot, getBacktestResults } = useTradeStore((state: any) => ({
+    setActiveBot: state.setActiveBot,
+    getBacktestResults: state.getBacktestResults
+  }));
   const [showBacktest, setShowBacktest] = useState(false);
+  const [bots, setBots] = useState<GridBot[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock bot data - in real app this would come from API
-  const bots: GridBot[] = [
-    {
-      id: '1',
-      name: 'WALL-E Grid Bot',
-      symbol: 'BTC/USDT',
-      strategy: 'Grid Trading',
-      upperPrice: 50000,
-      lowerPrice: 40000,
-      gridCount: 10,
-      levels: Array.from({ length: 10 }, (_, i) => ({
-        price: 40000 + (i * 1000),
-        type: i % 2 === 0 ? 'BUY' : 'SELL',
-        status: Math.random() > 0.5 ? 'FILLED' : 'PENDING'
-      })),
-      isActive: true,
-      status: 'RUNNING',
-      totalPnl: 125.50,
-      positionSize: 10,
-      stopLoss: 2,
-      takeProfit: 5,
-      exchange: 'binance',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: '2',
-      name: 'EVE DCA Bot',
-      symbol: 'ETH/USDT',
-      strategy: 'Dollar Cost Averaging',
-      upperPrice: 3500,
-      lowerPrice: 2500,
-      gridCount: 5,
-      levels: Array.from({ length: 5 }, (_, i) => ({
-        price: 2500 + (i * 200),
-        type: 'BUY',
-        status: Math.random() > 0.5 ? 'FILLED' : 'PENDING'
-      })),
-      isActive: false,
-      status: 'STOPPED',
-      totalPnl: -45.20,
-      positionSize: 5,
-      stopLoss: 3,
-      takeProfit: 8,
-      exchange: 'coinbase',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-  ];
+  // Fetch bots from API on component mount
+  useEffect(() => {
+    const fetchBots = async () => {
+      try {
+        const botData = await botApi.fetchBots();
+        setBots(botData);
+      } catch (error) {
+        console.error('Failed to fetch bots:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBots();
+  }, []);
 
   const handleBotClick = (bot: GridBot) => {
     setActiveBot(bot);
@@ -92,7 +65,7 @@ export function BotList() {
       
       <div className="space-y-4">
         {bots.map((bot) => {
-          const priceData = usePrice(bot.symbol);
+          const price = useTradeStore((state: any) => state.prices[bot.symbol]);
           const backtestResults = getBacktestResults(bot.id);
           const isSelected = activeBot?.id === bot.id;
           
@@ -110,23 +83,25 @@ export function BotList() {
                 <div>
                   <h3 className="text-lg font-bold text-white">{bot.name}</h3>
                   <p className="text-gray-400 text-sm">{bot.strategy} • {bot.symbol}</p>
-                  {priceData && (
+                  {price && (
                     <p className="text-walle-yellow text-sm font-semibold">
-                      Current: ${priceData.price.toLocaleString()}
+                      Current: ${price.price.toLocaleString()}
                     </p>
                   )}
                 </div>
-                <div className="text-right">
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    bot.status === 'RUNNING' ? 'bg-green-900 text-green-300' :
-                    bot.status === 'STOPPED' ? 'bg-gray-700 text-gray-300' :
-                    'bg-red-900 text-red-300'
-                  }`}>
-                    {bot.status}
-                  </span>
-                  <p className={`font-bold mt-1 ${bot.totalPnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    ${bot.totalPnl.toFixed(2)}
-                  </p>
+                <div className="text-right flex items-center gap-2">
+                  <EVEIcon 
+                    status={
+                      bot.status === 'RUNNING' ? 'running' :
+                      bot.status === 'STOPPED' ? 'stopped' : 'error'
+                    } 
+                    size="sm" 
+                  />
+                  <div>
+                    <p className={`font-bold ${bot.totalPnl >= 0 ? 'text-success' : 'text-alert'}`}>
+                      ${bot.totalPnl.toFixed(2)}
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -189,7 +164,7 @@ export function BotList() {
                 <div key={bot.id} className="space-y-2">
                   <p className="text-white font-semibold">{bot.name}</p>
                   {results.length > 0 ? (
-                    results.map((result) => (
+                    results.map((result: any) => (
                       <div key={result.id} className="flex justify-between items-center p-3 bg-gray-700 rounded">
                         <div>
                           <p className="text-gray-400 text-sm">

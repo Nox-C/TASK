@@ -4,7 +4,11 @@
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
-    "start": "next start -p 3001"
+    "start": "next start -p 3001",
+    "deploy": "./deploy.sh",
+    "health": "curl -f http://localhost:3001/api/health || echo '❌ Health check failed'",
+    "install:prod": "pnpm install --prod",
+    "clean": "rm -rf .next out dist"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
@@ -17,7 +21,8 @@
     "react-dom": "^18.2.0",
     "react-spring": "^10.0.3",
     "recharts": "^2.10.0",
-    "three": "^0.182.0"
+    "three": "^0.182.0",
+    "zustand": "^5.0.10"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

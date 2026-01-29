@@ -1,18 +1,20 @@
 'use client';
 
-import React, { useState } from 'react';
-import { MainChart } from './features/charts/components/MainChart';
+import { useState } from 'react';
 import { BotList } from './features/bots/components/BotList';
 import { GridForm } from './features/bots/components/GridForm';
+import { MainChart } from './features/charts/components/MainChart';
+import { BnLFooter } from './shared/components/BnLLogo';
+import { GlobalStatus } from './shared/components/GlobalStatus';
+import { KPICards } from './shared/components/KPICards';
 import WallEAnimation from './shared/components/WallEAnimation';
 import WallEIcon from './shared/components/WallEIcon';
-import { KPICards } from './shared/components/KPICards';
-import { useActiveBot } from './shared/context/ActiveBotContext';
-import { usePriceFeed } from './shared/context/PriceFeedContext';
+import { useActiveBot, useAllPrices, useTradeStore } from './shared/store/useTradeStore';
 
 export default function Main() {
-  const { activeBot } = useActiveBot();
-  const { prices } = usePriceFeed();
+  const activeBot = useActiveBot();
+  const { prices } = useAllPrices();
+  const isConnected = useTradeStore((state: any) => state.isConnected);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedSymbol, setSelectedSymbol] = useState('BTC/USDT');
 
@@ -30,7 +32,10 @@ export default function Main() {
   };
 
   return (
-    <div className="min-h-screen p-8 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen p-8 bg-bnl-dark">
+      {/* Global Status Bar */}
+      <GlobalStatus />
+      
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-6">
@@ -39,7 +44,7 @@ export default function Main() {
             <h1 className="text-5xl font-bold text-white mb-2 bg-clip-text text-transparent bg-gradient-to-r from-walle-yellow via-walle-orange to-walle-lightblue">
               WALL-E Trading Dashboard
             </h1>
-            <p className="text-gray-300 text-lg">
+            <p className="text-eve-white/70 text-lg">
               Advanced AI-Powered Trading Analytics
             </p>
           </div>
@@ -63,8 +68,14 @@ export default function Main() {
 
       {/* Live Price Ticker */}
       <div className="mb-6 backdrop-blur-xl bg-white/10 rounded-xl p-4 border border-white/20">
+        <div className="flex items-center gap-4 mb-2">
+          <WallEAnimation type="working" size="sm" />
+          <span className="text-white font-semibold">
+            {isConnected ? 'Live Data' : 'Connecting...'}
+          </span>
+        </div>
         <div className="flex gap-8 overflow-x-auto">
-          {Object.values(prices).map((price) => (
+          {prices && Object.values(prices).map((price: any) => (
             <div key={price.symbol} className="flex items-center gap-4 whitespace-nowrap">
               <span className="text-gray-400 font-medium">{price.symbol}</span>
               <span className="text-white font-bold text-lg">${price.price.toLocaleString()}</span>
@@ -81,7 +92,7 @@ export default function Main() {
 
       {/* Symbol Selector */}
       <div className="mb-6 flex gap-4">
-        {Object.keys(prices).map((symbol) => (
+        {prices && Object.keys(prices).map((symbol) => (
           <button
             key={symbol}
             onClick={() => setSelectedSymbol(symbol)}
@@ -170,6 +181,9 @@ export default function Main() {
           </div>
         </div>
       )}
+      
+      {/* BnL Footer */}
+      <BnLFooter />
     </div>
   );
 }

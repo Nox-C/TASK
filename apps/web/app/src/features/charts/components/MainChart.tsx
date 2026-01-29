@@ -2,13 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { useActiveBot } from '../../../shared/context/ActiveBotContext';
-import { usePrice } from '../../../shared/hooks/usePrice';
+import { useActiveBot, usePrice } from '../../../shared/store/useTradeStore';
 import { GridOverlay } from './GridOverlay';
 
 export function MainChart({ symbol }: { symbol: string }) {
   const priceData = usePrice(symbol);
-  const { activeBot } = useActiveBot();
+  const activeBot = useActiveBot();
   const [chartInstance, setChartInstance] = useState<any>(null);
   const chartContainerRef = useRef(null);
 

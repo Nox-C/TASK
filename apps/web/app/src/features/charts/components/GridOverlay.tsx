@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useActiveBot } from '../../../shared/context/ActiveBotContext';
+import { useActiveBot } from '../../../shared/store/useTradeStore';
 
 // This component acts as the "bridge" between shared state and chart
 // It listens to the shared state and draws lines on top of the chart
 export const GridOverlay = ({ chartApi }: { chartApi: any }) => {
-  const { activeBot } = useActiveBot();
+  const activeBot = useActiveBot();
 
   useEffect(() => {
     if (!activeBot || !chartApi) return;

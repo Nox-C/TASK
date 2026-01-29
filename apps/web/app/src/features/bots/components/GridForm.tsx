@@ -1,11 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useActiveBot } from '../../../shared/context/ActiveBotContext';
+import { useActiveBot, useTradeStore } from '../../../shared/store/useTradeStore';
 import { GridBot } from '../../../shared/types/trading';
 
 export function GridForm() {
-  const { activeBot, updateGridParams, setActiveBot } = useActiveBot();
+  const activeBot = useActiveBot();
+  const { updateGridParams, setActiveBot } = useTradeStore((state: any) => ({
+    updateGridParams: state.updateGridParams,
+    setActiveBot: state.setActiveBot
+  }));
   const [formData, setFormData] = useState({
     name: '',
     symbol: 'BTC/USDT',

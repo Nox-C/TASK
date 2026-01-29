@@ -30,13 +30,13 @@ const WallEAnimation: React.FC<WallEAnimationProps> = ({
   const getAnimationClass = () => {
     switch (type) {
       case 'working':
-        return 'animate-spin';
+        return 'animate-rotate-slow';
       case 'happy':
         return 'animate-bounce';
       case 'searching':
-        return 'animate-pulse';
+        return 'animate-pulse-slow';
       default:
-        return 'animate-pulse';
+        return 'animate-blink-slow';
     }
   };
 
