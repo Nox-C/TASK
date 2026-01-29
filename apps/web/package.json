@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
-    "start": "next start -p 3001",
+    "start": "next start",
     "deploy": "./deploy.sh",
     "health": "curl -f http://localhost:3001/api/health || echo '❌ Health check failed'",
     "install:prod": "pnpm install --prod",
