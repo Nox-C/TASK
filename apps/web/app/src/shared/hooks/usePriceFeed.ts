@@ -15,7 +15,7 @@ export const usePriceFeed = (symbol: string) => {
     
     // Use environment variable for WebSocket URL
     const wsUrl = process.env.NEXT_PUBLIC_WS_ENDPOINT || 'wss://stream.binance.com:9443/ws';
-    socketRef.current = new WebSocket(`${wsUrl}/${symbol.toLowerCase()}@ticker`);
+    socketRef.current = new WebSocket(`${wsUrl}/${symbol.toLowerCase()}@aggTrade`);
     
     socketRef.current.onopen = () => {
       setIsError(false);
@@ -25,13 +25,14 @@ export const usePriceFeed = (symbol: string) => {
     socketRef.current.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data);
-        if (data.s && data.c) { // Binance ticker format
+        // Binance aggTrade format: {e: "aggTrade", E: timestamp, s: symbol, p: price, q: quantity, ...}
+        if (data.e === "aggTrade" && data.s && data.p) {
           const priceData: PriceData = {
             symbol: data.s,
-            price: parseFloat(data.c),
-            change24h: parseFloat(data.P || '0'),
-            volume24h: parseFloat(data.v || '0'),
-            timestamp: Date.now()
+            price: parseFloat(data.p),
+            change24h: 0, // aggTrade doesn't include 24h change
+            volume24h: parseFloat(data.q || '0'),
+            timestamp: data.E || Date.now()
           };
           setPrice(symbol, priceData);
         }

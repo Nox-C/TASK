@@ -1,30 +1,25 @@
 services:
   - type: web
     name: task
-    plan: free # Use the free tier
-    region: oregon # Choose closest to your target users
+    plan: free
+    region: oregon
     runtime: node
     
-    # PNPM Setup Logic
     buildCommand: corepack enable && pnpm install && pnpm run build
     startCommand: pnpm run start
     
     envVars:
       - key: NODE_VERSION
-        value: "20.x" # Ensure modern Node for WebSockets
+        value: "20.x"
       - key: NPM_CONFIG_PRODUCTION
         value: "false"
       - key: NEXT_PUBLIC_ENVIRONMENT
         value: production
         
-      # These will be prompted in the Render Dashboard during first deploy
+      # Fix: Removed 'sync: false' from variables where you provide a value
       - key: NEXT_PUBLIC_API_URL
-        sync: false
+        sync: false # You will enter this manually in Render Dashboard
       - key: NEXT_PUBLIC_WS_URL
-        sync: false
+        value: "wss://stream.binance.com:9443/ws" # Hardcoded for Binance
       - key: NEXT_PUBLIC_WS_ENDPOINT
-        sync: false
-        value: "wss://stream.binance.com:9443/ws"
-
-    # Standard WebSocket timeout for Render Free Tier is 5 mins
-    # Our usePriceFeed auto-reboot handles this.
+        value: "wss://stream.binance.com:9443/ws" # Hardcoded for Binance
