@@ -4,6 +4,7 @@ services:
     plan: free
     region: oregon
     runtime: node
+    rootDir: apps/web
     
     buildCommand: corepack enable && pnpm install && pnpm run build
     startCommand: pnpm run start
