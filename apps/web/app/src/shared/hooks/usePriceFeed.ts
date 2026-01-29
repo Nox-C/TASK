@@ -52,7 +52,7 @@ export const usePriceFeed = (symbol: string) => {
       // Auto-reboot attempt after 10 seconds
       setTimeout(connect, 10000);
     };
-  }, [symbol, setPrice, setGlobalError]);
+  }, [symbol]);
 
   useEffect(() => { 
     connect(); 
