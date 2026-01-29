@@ -9,24 +9,29 @@ export const usePriceFeed = (symbol: string) => {
   const setGlobalError = useTradeStore((state) => state.setGlobalError);
   const [isError, setIsError] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);
+  const lastUpdateRef = useRef<number>(0);
 
-  const connect = useCallback(() => {
-    if (socketRef.current) socketRef.current.close();
-    
+  useEffect(() => {
     // Use environment variable for WebSocket URL
     const wsUrl = process.env.NEXT_PUBLIC_WS_ENDPOINT || 'wss://stream.binance.com:9443/ws';
-    socketRef.current = new WebSocket(`${wsUrl}/${symbol.toLowerCase()}@aggTrade`);
+    const ws = new WebSocket(`${wsUrl}/${symbol.toLowerCase()}@aggTrade`);
+    socketRef.current = ws;
     
-    socketRef.current.onopen = () => {
+    ws.onopen = () => {
       setIsError(false);
       setGlobalError(false);
     };
     
-    socketRef.current.onmessage = (e) => {
+    ws.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data);
         // Binance aggTrade format: {e: "aggTrade", E: timestamp, s: symbol, p: price, q: quantity, ...}
         if (data.e === "aggTrade" && data.s && data.p) {
+          // Throttle updates to prevent React death loops (max 10 updates per second)
+          const now = Date.now();
+          if (now - lastUpdateRef.current < 100) return; // Skip if less than 100ms since last update
+          lastUpdateRef.current = now;
+          
           const priceData: PriceData = {
             symbol: data.s,
             price: parseFloat(data.p),
@@ -34,6 +39,8 @@ export const usePriceFeed = (symbol: string) => {
             volume24h: parseFloat(data.q || '0'),
             timestamp: data.E || Date.now()
           };
+          
+          // Use functional update to avoid dependency issues
           setPrice(symbol, priceData);
         }
       } catch (error) {
@@ -41,23 +48,39 @@ export const usePriceFeed = (symbol: string) => {
       }
     };
     
-    socketRef.current.onerror = () => {
+    ws.onerror = () => {
       setIsError(true);
       setGlobalError(true);
     };
     
-    socketRef.current.onclose = () => {
+    ws.onclose = () => {
       setIsError(true);
       setGlobalError(true);
       // Auto-reboot attempt after 10 seconds
-      setTimeout(connect, 10000);
+      setTimeout(() => {
+        const wsUrl = process.env.NEXT_PUBLIC_WS_ENDPOINT || 'wss://stream.binance.com:9443/ws';
+        const newWs = new WebSocket(`${wsUrl}/${symbol.toLowerCase()}@aggTrade`);
+        socketRef.current = newWs;
+        // Re-attach all event handlers
+        newWs.onopen = ws.onopen;
+        newWs.onmessage = ws.onmessage;
+        newWs.onerror = ws.onerror;
+        newWs.onclose = ws.onclose;
+      }, 10000);
     };
-  }, [symbol]);
 
-  useEffect(() => { 
-    connect(); 
-    return () => socketRef.current?.close(); 
-  }, [connect]);
+    // Cleanup is vital to avoid memory leaks
+    return () => {
+      ws.close();
+    };
+  }, [symbol]); // Only depends on symbol, not on any functions
 
-  return { isError, reboot: connect };
+  const reconnect = useCallback(() => {
+    if (socketRef.current) {
+      socketRef.current.close();
+      // The onclose handler will automatically reconnect
+    }
+  }, []);
+
+  return { isError, reconnect };
 };
