@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useBinancePriceFeed } from './useBinancePriceFeed';
 import { useCoinbasePriceFeed } from './useCoinbasePriceFeed';
 import { useCryptoComPriceFeed } from './useCryptoComPriceFeed';
@@ -39,12 +40,12 @@ export const useUnifiedPriceFeed = (symbols: string[]) => {
   const overallConnected = Object.values(exchangeStatus).some(status => status.isConnected);
   const hasErrors = Object.values(exchangeStatus).some(status => status.error);
 
-  const reconnectAll = () => {
+  const reconnectAll = useCallback(() => {
     binanceFeed.reconnect();
     coinbaseFeed.reconnect();
     cryptoComFeed.reconnect();
     dexFeed.reconnect();
-  };
+  }, [binanceFeed.reconnect, coinbaseFeed.reconnect, cryptoComFeed.reconnect, dexFeed.reconnect]);
 
   return {
     isConnected: overallConnected,

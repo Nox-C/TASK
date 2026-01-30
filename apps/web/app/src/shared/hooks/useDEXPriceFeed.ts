@@ -10,10 +10,31 @@ export const useDEXPriceFeed = (symbols: string[]) => {
   const [error, setError] = useState<string | null>(null);
   const setPrice = useTradeStore((state) => state.setPrice);
   
-  // Local buffer for throttled updates
+  // Local buffer for throttled updates (useRef to prevent re-renders)
   const priceBufferRef = useRef<Map<string, PriceData>>(new Map());
   const updateIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttemptsRef = useRef(0);
+
+  // Safe reconnection logic with exponential backoff (wrapped in useCallback)
+  const reconnectDEX = useCallback(() => {
+    // Clear any existing reconnection timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+    }
+
+    // Implement exponential backoff
+    const backoffDelay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000); // Max 30 seconds
+    
+    reconnectTimeoutRef.current = setTimeout(() => {
+      console.log(`Attempting to reconnect DEX price polling (attempt ${reconnectAttemptsRef.current + 1})`);
+      
+      // Create new connection
+      connect();
+      reconnectAttemptsRef.current++;
+    }, backoffDelay);
+  }, []);
 
   const fetchDEXPrices = useCallback(async () => {
     try {
@@ -48,12 +69,16 @@ export const useDEXPriceFeed = (symbols: string[]) => {
       
       setIsConnected(true);
       setError(null);
+      reconnectAttemptsRef.current = 0; // Reset reconnection attempts on successful fetch
     } catch (err) {
       console.error('Error fetching DEX prices:', err);
       setError('Failed to fetch DEX prices');
       setIsConnected(false);
+      
+      // Reconnect with exponential backoff
+      reconnectDEX();
     }
-  }, [symbols]);
+  }, [symbols, reconnectDEX]);
 
   const connect = useCallback(() => {
     // Start polling for DEX prices (since DEXs don't have real-time WebSocket like CEXs)
@@ -62,7 +87,7 @@ export const useDEXPriceFeed = (symbols: string[]) => {
     // Poll every 2 seconds for DEX prices
     pollingIntervalRef.current = setInterval(fetchDEXPrices, 2000);
     
-    // Throttled state updates every 500ms
+    // Throttled state updates every 500ms (data buffering)
     updateIntervalRef.current = setInterval(() => {
       if (priceBufferRef.current.size > 0) {
         // Update React state with buffered prices
@@ -75,6 +100,7 @@ export const useDEXPriceFeed = (symbols: string[]) => {
     }, 500);
   }, [fetchDEXPrices, setPrice]);
 
+  // Connection initialization with empty dependency array (runs only once)
   useEffect(() => {
     connect();
 
@@ -87,19 +113,12 @@ export const useDEXPriceFeed = (symbols: string[]) => {
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
       }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
       priceBufferRef.current.clear();
     };
-  }, [connect]);
+  }, [connect]); // Only depends on connect, which is stable due to useCallback
 
-  const reconnect = useCallback(() => {
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current);
-    }
-    if (updateIntervalRef.current) {
-      clearInterval(updateIntervalRef.current);
-    }
-    setTimeout(connect, 1000);
-  }, [connect]);
-
-  return { isConnected, error, reconnect };
+  return { isConnected, error, reconnect: reconnectDEX };
 };

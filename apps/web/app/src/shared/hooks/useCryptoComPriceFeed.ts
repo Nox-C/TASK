@@ -5,14 +5,41 @@ import { PriceData } from '../types/trading';
 const CRYPTO_COM_WS_URL = 'wss://stream.crypto.com/v2/market';
 
 export const useCryptoComPriceFeed = (symbols: string[]) => {
+  // useRef for WebSocket instance (updating ref does not trigger re-render)
   const socketRef = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const setPrice = useTradeStore((state) => state.setPrice);
   
-  // Local buffer for throttled updates
+  // Local buffer for throttled updates (useRef to prevent re-renders)
   const priceBufferRef = useRef<Map<string, PriceData>>(new Map());
   const updateIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttemptsRef = useRef(0);
+
+  // Safe reconnection logic with exponential backoff (wrapped in useCallback)
+  const reconnectCryptoCom = useCallback(() => {
+    // Clear any existing reconnection timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+    }
+
+    // Implement exponential backoff
+    const backoffDelay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000); // Max 30 seconds
+    
+    reconnectTimeoutRef.current = setTimeout(() => {
+      console.log(`Attempting to reconnect Crypto.com WebSocket (attempt ${reconnectAttemptsRef.current + 1})`);
+      
+      // Check if current socket is open or connecting, close it first
+      if (socketRef.current && (socketRef.current.readyState === WebSocket.OPEN || socketRef.current.readyState === WebSocket.CONNECTING)) {
+        socketRef.current.close();
+      }
+      
+      // Create new connection
+      connect();
+      reconnectAttemptsRef.current++;
+    }, backoffDelay);
+  }, []);
 
   const connect = useCallback(() => {
     const socket = new WebSocket(CRYPTO_COM_WS_URL);
@@ -22,6 +49,7 @@ export const useCryptoComPriceFeed = (symbols: string[]) => {
       console.log('Crypto.com WebSocket connected');
       setIsConnected(true);
       setError(null);
+      reconnectAttemptsRef.current = 0; // Reset reconnection attempts on successful connection
       
       // Subscribe to all symbols
       const subscribeMessage = {
@@ -70,10 +98,8 @@ export const useCryptoComPriceFeed = (symbols: string[]) => {
       setIsConnected(false);
       setError('Connection lost. Reconnecting...');
       
-      // Reconnect after 5 seconds
-      setTimeout(() => {
-        connect();
-      }, 5000);
+      // Reconnect with exponential backoff
+      reconnectCryptoCom();
     };
 
     socket.onerror = (error) => {
@@ -82,7 +108,7 @@ export const useCryptoComPriceFeed = (symbols: string[]) => {
       setIsConnected(false);
     };
 
-    // Throttled state updates every 500ms
+    // Throttled state updates every 500ms (data buffering)
     updateIntervalRef.current = setInterval(() => {
       if (priceBufferRef.current.size > 0) {
         // Update React state with buffered prices
@@ -93,8 +119,9 @@ export const useCryptoComPriceFeed = (symbols: string[]) => {
         priceBufferRef.current.clear();
       }
     }, 500);
-  }, [symbols, setPrice]);
+  }, [symbols, setPrice, reconnectCryptoCom]);
 
+  // Connection initialization with empty dependency array (runs only once)
   useEffect(() => {
     connect();
 
@@ -104,19 +131,15 @@ export const useCryptoComPriceFeed = (symbols: string[]) => {
       if (updateIntervalRef.current) {
         clearInterval(updateIntervalRef.current);
       }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
       if (socketRef.current) {
         socketRef.current.close();
       }
       priceBufferRef.current.clear();
     };
-  }, [connect]);
+  }, [connect]); // Only depends on connect, which is stable due to useCallback
 
-  const reconnect = useCallback(() => {
-    if (socketRef.current) {
-      socketRef.current.close();
-    }
-    setTimeout(connect, 1000);
-  }, [connect]);
-
-  return { isConnected, error, reconnect };
+  return { isConnected, error, reconnect: reconnectCryptoCom };
 };

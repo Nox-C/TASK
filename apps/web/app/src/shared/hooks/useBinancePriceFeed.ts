@@ -1,19 +1,45 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTradeStore } from '../store/useTradeStore';
 import { PriceData } from '../types/trading';
-import { connect } from 'http2';
 
 const BASE_URL = 'wss://stream.binance.com:9443/ws';
 
 export const useBinancePriceFeed = (symbols: string[]) => {
+  // useRef for WebSocket instance (updating ref does not trigger re-render)
   const socketRef = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const setPrice = useTradeStore((state) => state.setPrice);
   
-  // Local buffer for throttled updates
+  // Local buffer for throttled updates (useRef to prevent re-renders)
   const priceBufferRef = useRef<Map<string, PriceData>>(new Map());
   const updateIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttemptsRef = useRef(0);
+
+  // Safe reconnection logic with exponential backoff (wrapped in useCallback)
+  const reconnectBinance = useCallback(() => {
+    // Clear any existing reconnection timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+    }
+
+    // Implement exponential backoff
+    const backoffDelay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000); // Max 30 seconds
+    
+    reconnectTimeoutRef.current = setTimeout(() => {
+      console.log(`Attempting to reconnect Binance WebSocket (attempt ${reconnectAttemptsRef.current + 1})`);
+      
+      // Check if current socket is open or connecting, close it first
+      if (socketRef.current && (socketRef.current.readyState === WebSocket.OPEN || socketRef.current.readyState === WebSocket.CONNECTING)) {
+        socketRef.current.close();
+      }
+      
+      // Create new connection
+      connect();
+      reconnectAttemptsRef.current++;
+    }, backoffDelay);
+  }, []);
 
   const connect = useCallback(() => {
     // Create combined stream URL for all symbols
@@ -28,6 +54,7 @@ export const useBinancePriceFeed = (symbols: string[]) => {
       console.log('Binance WebSocket connected');
       setIsConnected(true);
       setError(null);
+      reconnectAttemptsRef.current = 0; // Reset reconnection attempts on successful connection
     };
 
     socket.onmessage = (event) => {
@@ -76,11 +103,8 @@ export const useBinancePriceFeed = (symbols: string[]) => {
       setIsConnected(false);
       setError('Connection lost. Reconnecting...');
       
-      // Handle 24-hour reset or other disconnections
-      setTimeout(() => {
-        // Reconnect after 5 seconds (graceful shutdown)
-        connect();
-      }, 5000);
+      // Handle 24-hour reset or other disconnections with exponential backoff
+      reconnectBinance();
     };
 
     socket.onerror = (error) => {
@@ -89,56 +113,7 @@ export const useBinancePriceFeed = (symbols: string[]) => {
       setIsConnected(false);
     };
 
-    // Handle Binance ping/pong heartbeat (WebSocket API doesn't have onping, so we handle it in onmessage)
-    let lastPingTime = 0;
-    const originalOnMessage = socket.onmessage;
-    socket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        
-        // Check if it's a ping message
-        if (data.event === 'ping') {
-          console.log('Received ping from Binance, sending pong');
-          socket.send(JSON.stringify({ event: 'pong', time: data.time }));
-          lastPingTime = Date.now();
-          return;
-        }
-        
-        // Handle normal trade data
-        if (data.stream && data.data) {
-          const symbol = data.data.s;
-          const price = parseFloat(data.data.p);
-          
-          const priceData: PriceData = {
-            symbol,
-            price,
-            change24h: 0,
-            volume24h: parseFloat(data.data.q || '0'),
-            timestamp: data.data.E || Date.now()
-          };
-          
-          priceBufferRef.current.set(symbol, priceData);
-        }
-        else if (data.e === "aggTrade" && data.s && data.p) {
-          const symbol = data.s;
-          const price = parseFloat(data.p);
-          
-          const priceData: PriceData = {
-            symbol,
-            price,
-            change24h: 0,
-            volume24h: parseFloat(data.q || '0'),
-            timestamp: data.E || Date.now()
-          };
-          
-          priceBufferRef.current.set(symbol, priceData);
-        }
-      } catch (err) {
-        console.error('Error parsing Binance message:', err);
-      }
-    };
-
-    // Throttled state updates every 500ms
+    // Throttled state updates every 500ms (data buffering)
     updateIntervalRef.current = setInterval(() => {
       if (priceBufferRef.current.size > 0) {
         // Update React state with buffered prices
@@ -149,8 +124,9 @@ export const useBinancePriceFeed = (symbols: string[]) => {
         priceBufferRef.current.clear();
       }
     }, 500);
-  }, [symbols, setPrice]);
+  }, [symbols, setPrice, reconnectBinance]);
 
+  // Connection initialization with empty dependency array (runs only once)
   useEffect(() => {
     connect();
 
@@ -160,19 +136,15 @@ export const useBinancePriceFeed = (symbols: string[]) => {
       if (updateIntervalRef.current) {
         clearInterval(updateIntervalRef.current);
       }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
       if (socketRef.current) {
         socketRef.current.close();
       }
       priceBufferRef.current.clear();
     };
-  }, [connect]);
+  }, [connect]); // Only depends on connect, which is stable due to useCallback
 
-  const reconnect = useCallback(() => {
-    if (socketRef.current) {
-      socketRef.current.close();
-    }
-    setTimeout(connect, 1000);
-  }, [connect]);
-
-  return { isConnected, error, reconnect };
+  return { isConnected, error, reconnect: reconnectBinance };
 };
