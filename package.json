@@ -2,14 +2,15 @@
   "name": "task-trading-bot",
   "version": "1.0.0",
   "private": true,
+  "packageManager": "pnpm@8.15.0",
   "scripts": {
     "dev": "turbo run dev --parallel",
-    "dev:web": "cd apps/web && pnpm dev",
-    "dev:api": "cd apps/api && pnpm dev",
-    "dev:worker": "cd apps/worker && pnpm dev",
+    "dev:web": "turbo run dev --filter web",
+    "dev:api": "turbo run dev --filter api",
+    "dev:worker": "turbo run dev --filter worker",
     "build": "turbo run build",
-    "db:push": "cd packages/database && pnpm db:push",
-    "db:studio": "cd packages/database && pnpm db:studio"
+    "db:push": "turbo run db:push --filter database",
+    "db:studio": "turbo run db:studio --filter database"
   },
   "devDependencies": {
     "turbo": "^2.7.6",

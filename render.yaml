@@ -4,10 +4,10 @@ services:
     plan: free
     region: oregon
     runtime: node
-    rootDir: apps/web
+    rootDir: ./
     
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm run build
-    startCommand: pnpm run start
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build --filter @task/web
+    startCommand: cd apps/web && pnpm start
     healthCheckPath: /api/health
     
     envVars:
@@ -27,3 +27,21 @@ services:
         value: "wss://stream.binance.com:9443/ws" # Hardcoded for Binance
       - key: NEXT_PUBLIC_WS_ENDPOINT
         value: "wss://stream.binance.com:9443/ws" # Hardcoded for Binance
+
+  - type: worker
+    name: task-worker
+    plan: free
+    region: oregon
+    runtime: node
+    rootDir: ./
+    
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build --filter @task/worker
+    startCommand: cd apps/worker && pnpm start
+    
+    envVars:
+      - key: NODE_VERSION
+        value: "20.x"
+      - key: NODE_ENV
+        value: "production"
+      - key: NEXT_PUBLIC_ENVIRONMENT
+        value: production
