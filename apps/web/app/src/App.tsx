@@ -11,7 +11,7 @@ function PriceFeedProvider({ children }: { children: React.ReactNode }) {
   
   return (
     <>
-      {/* Test connection status indicator */}
+      {/* Test connection status indicator - always visible for debugging */}
       <div style={{ 
         position: 'fixed', 
         top: 10, 
