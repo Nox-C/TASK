@@ -9,14 +9,27 @@ export function App() {
   useEffect(() => {
     console.log('🧪 App useEffect running');
     setMounted(true);
+    
+    // Force DOM manipulation to verify client-side execution
+    const testDiv = document.createElement('div');
+    testDiv.id = 'client-test';
+    testDiv.style.cssText = 'position:fixed;top:50px;right:10px;background:#2196F3;color:white;padding:8px;font-family:monospace;font-size:12px;z-index:9999;';
+    testDiv.textContent = '🔵 JS Working';
+    document.body.appendChild(testDiv);
+    
+    return () => {
+      if (document.getElementById('client-test')) {
+        document.body.removeChild(testDiv);
+      }
+    };
   }, []);
   
   console.log('🧪 App component rendering, mounted:', mounted);
   
   return (
     <>
-      {/* Persistent test indicator */}
-      <div style={{ 
+      {/* Server-side rendered indicator */}
+      <div id="server-indicator" style={{ 
         position: 'fixed', 
         top: 10, 
         right: 10, 
