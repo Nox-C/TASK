@@ -3,6 +3,14 @@
   "version": "1.0.0",
   "main": "public/electron.js",
   "homepage": "./",
+  "author": {
+    "name": "TASK Trading Bot",
+    "email": "task@trading-bot.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Nox-C/TASK.git"
+  },
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
@@ -33,56 +41,22 @@
     "viem": "^2.45.1",
     "zustand": "^5.0.10"
   },
-  "build": {
-    "appId": "com.task.trading-bot",
-    "productName": "TASK Trading Bot",
-    "directories": {
-      "output": "dist"
-    },
-    "files": [
-      ".next/**",
-      "public/**",
-      "package.json"
-    ],
-    "extraResources": [
-      {
-        "from": "public/assets/wall-e/",
-        "to": "assets/wall-e/"
+    "build": {
+      "appId": "com.task.trading-bot",
+      "productName": "TaskTradingBot",
+      "directories": {
+        "output": "dist"
+      },
+      "files": [
+        ".next/**",
+        "public/**",
+        "package.json"
+      ],
+      "win": {
+        "icon": "wall-e-icon.ico",
+        "target": "nsis"
       }
-    ],
-    "mac": {
-      "category": "public.app-category.finance",
-      "icon": "wall-e-icon.icns",
-      "target": [
-        {
-          "target": "dmg",
-          "arch": ["x64", "arm64"]
-        }
-      ]
     },
-    "win": {
-      "icon": "wall-e-icon.ico",
-      "target": [
-        {
-          "target": "nsis",
-          "arch": ["x64"]
-        }
-      ]
-    },
-    "linux": {
-      "icon": "wall-e-icon.png",
-      "target": [
-        {
-          "target": "AppImage",
-          "arch": ["x64"]
-        },
-        {
-          "target": "deb",
-          "arch": ["x64"]
-        }
-      ]
-    }
-  },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/react": "^18.2.0",
