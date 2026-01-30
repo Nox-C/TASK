@@ -11,6 +11,3 @@ export const prisma =
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 export * from '@prisma/client';
-
-// Re-export enums for easier importing
-export { BotStatus, OrderSide, OrderStatus, OrderType } from '@prisma/client';

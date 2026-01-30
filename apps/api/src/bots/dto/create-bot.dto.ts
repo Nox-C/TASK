@@ -1,5 +1,4 @@
-import { BotStatus } from '@task/database';
-import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateBotDto {
   @IsString()
@@ -24,6 +23,6 @@ export class CreateBotDto {
   takeProfit!: number;
 
   @IsOptional()
-  @IsEnum(BotStatus)
-  status?: BotStatus;
+  @IsString()
+  status?: string;
 }

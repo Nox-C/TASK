@@ -1,0 +1,30 @@
+{
+  "name": "TASK Trading Bot",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
+  "features": {
+    "ghcr.io/devcontainers/features/pnpm:2": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-typescript-next"
+      ]
+    }
+  },
+  "postCreateCommand": "pnpm install && pnpm run build:all",
+  "forwardPorts": [3001, 3000],
+  "portsAttributes": {
+    "3001": {
+      "label": "Web App",
+      "onAutoForward": "notify"
+    },
+    "3000": {
+      "label": "API Server", 
+      "onAutoForward": "notify"
+    }
+  },
+  "remoteUser": "node"
+}

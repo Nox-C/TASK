@@ -5,10 +5,14 @@
   "packageManager": "pnpm@8.15.0",
   "scripts": {
     "dev": "turbo run dev --parallel",
-    "dev:web": "turbo run dev --filter web",
-    "dev:api": "turbo run dev --filter api",
-    "dev:worker": "turbo run dev --filter worker",
+    "dev:web": "turbo run dev --filter @task/web",
+    "dev:api": "turbo run dev --filter @task/api",
+    "dev:worker": "turbo run dev --filter @task/worker",
+    "start:all": "turbo run dev --parallel",
+    "build:all": "turbo run build",
     "build": "turbo run build",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
     "db:push": "turbo run db:push --filter database",
     "db:studio": "turbo run db:studio --filter database"
   },
