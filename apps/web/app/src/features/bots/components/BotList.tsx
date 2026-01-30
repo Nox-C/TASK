@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { EVEIcon } from '../../../shared/components/EVEIcon';
 import { useActiveBot, useTradeStore } from '../../../shared/store/useTradeStore';
 import { GridBot } from '../../../shared/types/trading';
-import { botApi } from '../services/botApi';
+import { botApi } from '../../../shared/services/botApi';
 
 export function BotList() {
   const activeBot = useActiveBot();
