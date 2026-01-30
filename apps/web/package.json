@@ -1,10 +1,15 @@
 {
   "name": "@task/web",
   "version": "1.0.0",
+  "main": "public/electron.js",
+  "homepage": "./",
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start",
+    "electron": "electron .",
+    "electron-dev": "concurrently \"pnpm dev\" \"pnpm electron\"",
+    "electron-pack": "electron-builder",
     "deploy": "./deploy.sh",
     "health": "curl -f http://localhost:3001/api/health || echo '❌ Health check failed'",
     "install:prod": "pnpm install --prod",
@@ -28,9 +33,62 @@
     "viem": "^2.45.1",
     "zustand": "^5.0.10"
   },
+  "build": {
+    "appId": "com.task.trading-bot",
+    "productName": "TASK Trading Bot",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      ".next/**",
+      "public/**",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "public/assets/wall-e/",
+        "to": "assets/wall-e/"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.finance",
+      "icon": "public/assets/wall-e/walle-icon.icns",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ]
+    },
+    "win": {
+      "icon": "public/assets/wall-e/walle-icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "linux": {
+      "icon": "public/assets/wall-e/walle-icon.png",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        }
+      ]
+    }
+  },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/react": "^18.2.0",
+    "concurrently": "^9.2.1",
+    "electron": "^40.1.0",
+    "electron-builder": "^26.4.0",
     "tailwindcss": "^3.3.0",
     "typescript": "^5.2.0"
   }
