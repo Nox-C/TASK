@@ -6,13 +6,15 @@ services:
     runtime: node
     rootDir: apps/web
     
-    buildCommand: corepack enable && pnpm install && pnpm run build
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm run build
     startCommand: pnpm run start
     healthCheckPath: /api/health
     
     envVars:
       - key: NODE_VERSION
         value: "20.x"
+      - key: NODE_ENV
+        value: "production"
       - key: NPM_CONFIG_PRODUCTION
         value: "false"
       - key: NEXT_PUBLIC_ENVIRONMENT
