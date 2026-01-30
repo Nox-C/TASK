@@ -17,7 +17,7 @@ function createWindow() {
       enableRemoteModule: false,
       preload: path.join(__dirname, 'preload.js')
     },
-    icon: path.join(__dirname, 'assets/wall-e/walle-icon.png'),
+    icon: path.join(__dirname, 'wall-e-icon.png'),
     show: false, // Don't show until ready-to-show
     titleBarStyle: 'hiddenInset', // macOS style
     frame: true // Keep frame for now

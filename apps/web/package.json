@@ -52,7 +52,7 @@
     ],
     "mac": {
       "category": "public.app-category.finance",
-      "icon": "public/assets/wall-e/walle-icon.icns",
+      "icon": "wall-e-icon.icns",
       "target": [
         {
           "target": "dmg",
@@ -61,7 +61,7 @@
       ]
     },
     "win": {
-      "icon": "public/assets/wall-e/walle-icon.ico",
+      "icon": "wall-e-icon.ico",
       "target": [
         {
           "target": "nsis",
@@ -70,7 +70,7 @@
       ]
     },
     "linux": {
-      "icon": "public/assets/wall-e/walle-icon.png",
+      "icon": "wall-e-icon.png",
       "target": [
         {
           "target": "AppImage",
