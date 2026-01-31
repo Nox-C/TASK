@@ -1,16 +1,21 @@
 {
-    "license": "UNLICENSED",
-    "name": "@task/worker",
-    "version": "0.0.0",
-    "private": true,
-    "scripts": {
-        "build": "echo 'no build needed'",
-        "deploy": "wrangler deploy",
-        "dev": "wrangler dev"
-    },
-    "devDependencies": {
-        "@cloudflare/workers-types": "^4.20240512.0",
-        "typescript": "^5.0.0",
-        "wrangler": "^4.0.0"
-    }
+  "name": "@task/worker",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker for TASK trading bot",
+  "main": "src/index.js",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240512.0",
+    "typescript": "^5.0.0",
+    "wrangler": "^4.0.0",
+    "vitest": "^4.0.18"
+  },
+  "dependencies": {
+    "hono": "^4.0.0"
+  }
 }
