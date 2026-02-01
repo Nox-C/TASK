@@ -6,6 +6,14 @@
     "apps/*",
     "packages/*"
   ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "dev:web": "pnpm --filter @task/web dev",
+    "dev:api": "pnpm --filter @task/api dev",
+    "dev:worker": "pnpm --filter @task/worker dev"
+  },
   "devDependencies": {
     "turbo": "^2.8.0",
     "typescript": "^5.9.3"

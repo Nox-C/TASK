@@ -1,8 +1,44 @@
 const { app, BrowserWindow, Menu, ipcMain, shell } = require('electron');
 const path = require('path');
+const { spawn } = require('child_process');
 const isDev = process.env.NODE_ENV === 'development';
 
 let mainWindow;
+let devServers = [];
+
+// Start dev servers in development
+function startDevServers() {
+  if (!isDev) return;
+
+  console.log('🚀 Starting development servers...');
+  
+  // Start Next.js on port 3001
+  const nextServer = spawn('pnpm', ['--filter', '@task/web', 'dev', '--', '-p', '3001'], {
+    cwd: path.join(__dirname, '../../..'),
+    stdio: 'inherit',
+    shell: true
+  });
+  devServers.push(nextServer);
+  console.log('📱 Next.js starting on http://localhost:3001');
+
+  // Start API on port 3000
+  const apiServer = spawn('pnpm', ['--filter', '@task/api', 'dev'], {
+    cwd: path.join(__dirname, '../../..'),
+    stdio: 'inherit',
+    shell: true
+  });
+  devServers.push(apiServer);
+  console.log('🤖 API starting on http://localhost:3000');
+}
+
+// Stop all dev servers on exit
+function stopDevServers() {
+  devServers.forEach(server => {
+    if (server && !server.killed) {
+      server.kill();
+    }
+  });
+}
 
 function createWindow() {
   // Create the browser window
@@ -133,8 +169,13 @@ function createMenu() {
 
 // App event handlers
 app.whenReady().then(() => {
-  createWindow();
-  createMenu();
+  startDevServers();
+  
+  // Wait a moment for servers to start
+  setTimeout(() => {
+    createWindow();
+    createMenu();
+  }, 2000);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -144,9 +185,14 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
+  stopDevServers();
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+app.on('before-quit', () => {
+  stopDevServers();
 });
 
 // Security: Prevent new window creation
