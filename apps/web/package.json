@@ -52,7 +52,7 @@
   },
   "build": {
     "appId": "com.task.trading-bot",
-    "productName": "TaskTradingBot",
+    "productName": "WALL-E Trading Bot",
     "directories": {
       "output": "dist"
     },
@@ -62,8 +62,16 @@
       "package.json"
     ],
     "win": {
-      "icon": "wall-e-icon.ico",
+      "icon": "public/wall-e-icon.ico",
       "target": "nsis"
+    },
+    "mac": {
+      "icon": "public/wall-e-icon.icns",
+      "target": "dmg"
+    },
+    "linux": {
+      "icon": "public/wall-e-icon.png",
+      "target": "AppImage"
     }
   }
 }

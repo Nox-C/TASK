@@ -2,7 +2,7 @@
   "name": "@task/worker",
   "version": "1.0.0",
   "description": "Cloudflare Worker for TASK trading bot",
-  "main": "src/index.js",
+  "main": "src/index.ts",
   "private": true,
   "scripts": {
     "dev": "wrangler dev",
@@ -12,10 +12,11 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240512.0",
     "typescript": "^5.0.0",
-    "wrangler": "^4.0.0",
-    "vitest": "^4.0.18"
+    "vitest": "^4.0.18",
+    "wrangler": "^4.0.0"
   },
   "dependencies": {
-    "hono": "^4.0.0"
+    "hono": "^4.0.0",
+    "jose": "^6.1.3"
   }
 }

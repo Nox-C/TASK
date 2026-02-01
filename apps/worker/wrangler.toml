@@ -1,3 +1,22 @@
 name = "task-trading-bot-worker"
 main = "src/index.ts"
 compatibility_date = "2024-05-14"
+
+[vars]
+POLICY_AUD = "cryptonox"
+TEAM_DOMAIN = "https://cryptonox.cloudflareaccess.com"
+
+[observability]
+enabled = false
+head_sampling_rate = 1
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+persist = true
+invocation_logs = true
+
+[observability.traces]
+enabled = true
+persist = true
+head_sampling_rate = 1
